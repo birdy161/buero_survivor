@@ -28,7 +28,7 @@ const p=P[t];if(!p)return;o.type=p[3];o.frequency.setValueAtTime(p[0],n);o.frequ
 g.gain.setValueAtTime(p[2],n);g.gain.exponentialRampToValueAtTime(.001,n+.15);o.start(n);o.stop(n+.16)}catch(e){}}
 
 // ═══════ SAVE ═══════
-let save={coins:0,totalKills:0,games:0,bestTime:0,bestWave:0,bestKills:0,bestCombo:0,up:{hp:0,dmg:0,spd:0,armor:0,luck:0,xp:0},unlocked:[0]};
+let save={coins:0,totalKills:0,games:0,bestTime:0,bestWave:0,bestKills:0,bestCombo:0,up:{hp:0,dmg:0,spd:0,armor:0,luck:0,xp:0},unlocked:[0],run:null};
 const SAVE_KEY='bs5',COOKIE_MAX_AGE=60*60*24*365*5;
 function getCookie(name){
 const v=('; '+document.cookie).split('; '+name+'=');
@@ -177,6 +177,7 @@ let combo=0,comboT=0,lastMS=0,comboSpdB=0,comboShield=0;
 let bossRef=null,specCD=0,worldW=3000,worldH=3000,menuA=0;
 let cam={x:0,y:0,shake:0};
 let inputDir={x:0,y:0},joyAct=false,joyS={x:0,y:0},joyId=null,keys={},taps=[],upChoices=[];
+let runSaveTimer=0;
 // Weapon state tracking
 let wepState={clicks:0}; // for mouse multi-click
 let hitTracker={}; // for pencil stacking
@@ -187,7 +188,7 @@ document.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 C.addEventListener('touchstart',e=>{e.preventDefault();initA();for(const t of e.changedTouches){const x=t.clientX,y=t.clientY;
 if(state!=='playing'){taps.push({x,y});continue}
 if(Math.hypot(x-(VW-55),y-(VH-100))<38){useSpec();continue}
-if(x>VW-55&&y>VH-48){state='pause';return}
+if(x>VW-55&&y>VH-48){state='pause';saveRunNow();return}
 if(x<VW*.45&&!joyAct){joyAct=true;joyS={x,y};joyId=t.identifier}
 else taps.push({x,y})}},{passive:false});
 C.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier===joyId){
@@ -195,9 +196,15 @@ let dx=t.clientX-joyS.x,dy=t.clientY-joyS.y;const d=Math.hypot(dx,dy),m=55;
 if(d>m){dx=dx/d*m;dy=dy/d*m}inputDir=d>8?{x:dx/m,y:dy/m}:{x:0,y:0}}}},{passive:false});
 C.addEventListener('touchend',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===joyId){joyAct=false;joyId=null;inputDir={x:0,y:0}}},{passive:false});
 C.addEventListener('click',e=>{initA();if(state!=='playing')taps.push({x:e.clientX,y:e.clientY})});
+addEventListener('beforeunload',()=>saveRunNow());
 function getKI(){let dx=0,dy=0;if(keys.w||keys.arrowup)dy=-1;if(keys.s||keys.arrowdown)dy=1;if(keys.a||keys.arrowleft)dx=-1;if(keys.d||keys.arrowright)dx=1;
 if(dx||dy){const l=Math.hypot(dx,dy);inputDir={x:dx/l,y:dy/l}}else if(!joyAct)inputDir={x:0,y:0};
-if(keys[' ']){useSpec();keys[' ']=false}if(keys.escape){state=state==='playing'?'pause':state==='pause'?'playing':state;keys.escape=false}}
+if(keys[' ']){useSpec();keys[' ']=false}
+if(keys.escape){
+ if(state==='playing'){state='pause';saveRunNow()}
+ else if(state==='pause')state='playing';
+ keys.escape=false;
+}}
 
 // ═══════ BUTTONS ═══════
 let btns=[];function btn(x,y,w,h,cb){btns.push({x:x-w/2,y:y-h/2,w,h,cb})}
@@ -225,7 +232,43 @@ enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 gameTime=0;kills=0;coins=0;wave=1;waveT=0;spawnT=0;
 combo=0;comboT=0;lastMS=0;comboSpdB=0;comboShield=0;
 bossRef=null;specCD=0;upChoices=[];wepState={clicks:0};hitTracker={};
-cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='playing';save.games++;doS();
+cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='playing';runSaveTimer=0;
+save.games++;save.run=null;doS();
+}
+
+function saveRunNow(){
+if(!P||state==='menu'||state==='charsel'||state==='shop'||state==='stats'||state==='gameover')return;
+save.run={
+v:1,selChar,state:'pause',
+gameTime,kills,coins,wave,waveT,spawnT,combo,comboT,lastMS,comboSpdB,comboShield,specCD,
+P:{
+x:P.x,y:P.y,hp:P.hp,mhp:P.mhp,spd:P.spd,bdmg:P.bdmg,dmgM:P.dmgM,atkSpd:P.atkSpd,spdM:P.spdM,armor:P.armor,regen:P.regen,
+magnet:P.magnet,crit:P.crit,proj:P.proj,xpM:P.xpM,lv:P.lv,xp:P.xp,xpN:P.xpN,sz:P.sz,invT:P.invT,shieldT:P.shieldT,
+facing:P.facing,chId:P.ch?.id||0,weps:(P.weps||[]).map(w=>({id:w.id,timer:w.timer||0,lv:w.lv||1,shotCount:w.shotCount||0}))
+}
+};
+doS();
+}
+
+function clearRunSave(){
+if(save.run!==null){save.run=null;doS()}
+}
+
+function restoreRunIfAny(){
+const r=save.run;
+if(!r||!r.P)return;
+const chId=Number.isInteger(r.P.chId)?r.P.chId:0;
+const ch=CHARS[chId]||CHARS[0];
+selChar=Number.isInteger(r.selChar)?clamp(r.selChar,0,CHARS.length-1):ch.id;
+P={x:r.P.x,y:r.P.y,hp:r.P.hp,mhp:r.P.mhp,spd:r.P.spd,bdmg:r.P.bdmg,dmgM:r.P.dmgM,atkSpd:r.P.atkSpd,spdM:r.P.spdM,armor:r.P.armor,regen:r.P.regen,
+magnet:r.P.magnet,crit:r.P.crit,proj:r.P.proj,xpM:r.P.xpM,lv:r.P.lv,xp:r.P.xp,xpN:r.P.xpN,weps:[],ch,sz:r.P.sz||15,invT:r.P.invT||0,
+facing:r.P.facing||{x:1,y:0},shieldT:r.P.shieldT||0};
+P.weps=(r.P.weps||[]).map(w=>{if(!WP[w.id])return null;return {...WP[w.id],id:w.id,timer:w.timer||0,lv:w.lv||1,shotCount:w.shotCount||0}}).filter(Boolean);
+if(!P.weps.length){const wd=WP[ch.wep];P.weps.push({...wd,id:ch.wep,timer:0,lv:1,shotCount:0})}
+gameTime=r.gameTime||0;kills=r.kills||0;coins=r.coins||0;wave=Math.max(1,r.wave||1);waveT=r.waveT||0;spawnT=r.spawnT||0;
+combo=r.combo||0;comboT=r.comboT||0;lastMS=r.lastMS||0;comboSpdB=r.comboSpdB||0;comboShield=r.comboShield||0;
+specCD=r.specCD||0;bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
+cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;
 }
 
 // ═══════ COMBO LOGIC ═══════
@@ -435,7 +478,7 @@ if(P.hp<=0){P.hp=0;gameOver()}
 
 function addXP(v){if(!P)return;P.xp+=v;while(P.xp>=P.xpN){P.xp-=P.xpN;P.lv++;
 P.xpN=Math.floor(P.xpN*1.28+15);sfx('lvl');burst(P.x,P.y,18,'#FFD740',120,5,.5);
-state='upgrade';makeUC()}}
+state='upgrade';makeUC();saveRunNow()}}
 
 function comboDmg(){return 1+Math.min(combo*.015,1)} // +1.5% per combo, max +100%
 function comboXp(){return 1+Math.min(combo*.012,0.8)} // +1.2% per combo, max +80%
@@ -459,7 +502,7 @@ switch(ch.spec){
 
 function gameOver(){state='gameover';save.totalKills+=kills;save.coins+=coins;
 if(gameTime>save.bestTime)save.bestTime=gameTime;if(wave>save.bestWave)save.bestWave=wave;
-if(kills>save.bestKills)save.bestKills=kills;if(combo>save.bestCombo)save.bestCombo=combo;doS();sfx('boom')}
+if(kills>save.bestKills)save.bestKills=kills;if(combo>save.bestCombo)save.bestCombo=combo;clearRunSave();doS();sfx('boom')}
 
 function makeUC(){if(!P)return;let pool=UPG.filter(u=>{if(u.t==='w')return!P.weps.find(w=>w.id===u.w);return true});
 const lk=save.up.luck*.04;upChoices=[];
@@ -619,6 +662,8 @@ for(let i=parts.length-1;i>=0;i--){const p=parts[i];
 
 cam.x=lerp(cam.x,P.x-VW/2,6*dt);cam.y=lerp(cam.y,P.y-VH/2,6*dt);
 if(cam.shake>.5)cam.shake*=.88;else cam.shake=0;
+runSaveTimer+=dt;
+if(runSaveTimer>=1){runSaveTimer=0;saveRunNow()}
 }
 
 // ═══════════════════════════════════════
@@ -876,7 +921,7 @@ btns=[];
 X.fillStyle='rgba(255,255,255,.08)';X.beginPath();X.roundRect(VW/2-100,VH*.46,200,44,12);X.fill();
 dT('▶ WEITER',VW/2,VH*.46+22,15,'#fff');btn(VW/2,VH*.46+22,200,44,()=>{state='playing'});
 X.fillStyle='rgba(255,255,255,.08)';X.beginPath();X.roundRect(VW/2-100,VH*.56,200,44,12);X.fill();
-dT('🏠 KÜNDIGEN',VW/2,VH*.56+22,14,'#FF8A80');btn(VW/2,VH*.56+22,200,44,()=>{state='menu';P=null});
+dT('🏠 KÜNDIGEN',VW/2,VH*.56+22,14,'#FF8A80');btn(VW/2,VH*.56+22,200,44,()=>{state='menu';P=null;clearRunSave()});
 chkB(function(){const t=[...taps];taps=[];return t}());
 }
 
@@ -892,11 +937,12 @@ btns=[];const by3=VH*.66;
 X.fillStyle='#E65100';X.beginPath();X.roundRect(VW/2-100,by3,200,44,12);X.fill();X.strokeStyle='#FFA726';X.lineWidth=2;X.stroke();
 dT('🔄 NOCHMAL',VW/2,by3+22,15,'#fff');btn(VW/2,by3+22,200,44,()=>startGame());
 X.fillStyle='rgba(255,255,255,.08)';X.beginPath();X.roundRect(VW/2-100,by3+54,200,38,12);X.fill();
-dT('🏠 MENÜ',VW/2,by3+73,13,'#fff');btn(VW/2,by3+73,200,38,()=>{state='menu';P=null});
+dT('🏠 MENÜ',VW/2,by3+73,13,'#fff');btn(VW/2,by3+73,200,38,()=>{state='menu';P=null;clearRunSave()});
 chkB(function(){const t=[...taps];taps=[];return t}());
 }
 
 // ═══════ MAIN LOOP ═══════
+restoreRunIfAny();
 let lastT=0;
 function loop(ts){requestAnimationFrame(loop);if(!lastT)lastT=ts;let dt=(ts-lastT)/1000;lastT=ts;if(dt>.1)dt=.1;update(dt);render()}
 requestAnimationFrame(loop);
