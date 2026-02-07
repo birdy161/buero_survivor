@@ -17,6 +17,39 @@ save.games++;save.run=null;doS();
 }
 
 function hasTemp(id){return (activeTemps[id]||0)>0}
+function normalizeTempState(){
+const clean={};
+if(activeTemps&&typeof activeTemps==='object'){
+ for(const id of Object.keys(activeTemps)){
+  const t=TEMP_BY_ID[id],v=Number(activeTemps[id]);
+  if(!t||!Number.isFinite(v)||v<=0)continue;
+  clean[id]=clamp(v,.05,t.dur*2);
+ }
+}
+activeTemps=clean;
+if(!tempData||typeof tempData!=='object')tempData={};
+if(tempData.bubbleCharges!==undefined){
+ const c=Math.floor(Number(tempData.bubbleCharges));
+ if(!Number.isFinite(c)||c<=0)delete tempData.bubbleCharges;
+ else tempData.bubbleCharges=clamp(c,1,3);
+}
+if(tempData.droneCd!==undefined){
+ const c=Number(tempData.droneCd);
+ if(!Number.isFinite(c))delete tempData.droneCd;
+ else tempData.droneCd=clamp(c,0,.9);
+}
+if(tempData.droneA!==undefined){
+ const a=Number(tempData.droneA);
+ if(!Number.isFinite(a))delete tempData.droneA;
+ else tempData.droneA=a%(PI2*1000);
+}
+if(tempData.alarmPulse!==undefined){
+ const p=Number(tempData.alarmPulse);
+ if(!Number.isFinite(p))delete tempData.alarmPulse;
+ else tempData.alarmPulse=clamp(p,0,2);
+}
+if(tempData.vpnFirst!==undefined)tempData.vpnFirst=!!tempData.vpnFirst;
+}
 function addTemp(id,dur){
 if(!TEMP_BY_ID[id])return;
 if(dur<=0){applyInstantTemp(id);return}
@@ -116,19 +149,31 @@ if(save.run!==null){save.run=null;doS()}
 function restoreRunIfAny(){
 const r=save.run;
 if(!r||!r.P)return;
+try{
+const num=(v,d)=>{v=Number(v);return Number.isFinite(v)?v:d};
 const chId=Number.isInteger(r.P.chId)?r.P.chId:0;
 const ch=CHARS[chId]||CHARS[0];
 selChar=Number.isInteger(r.selChar)?clamp(r.selChar,0,CHARS.length-1):ch.id;
-P={x:r.P.x,y:r.P.y,hp:r.P.hp,mhp:r.P.mhp,spd:r.P.spd,bdmg:r.P.bdmg,dmgM:r.P.dmgM,atkSpd:r.P.atkSpd,spdM:r.P.spdM,armor:r.P.armor,regen:r.P.regen,
-magnet:r.P.magnet,crit:r.P.crit,proj:r.P.proj,xpM:r.P.xpM,lv:r.P.lv,xp:r.P.xp,xpN:r.P.xpN,weps:[],ch,sz:r.P.sz||15,invT:r.P.invT||0,
-facing:r.P.facing||{x:1,y:0},shieldT:r.P.shieldT||0};
-P.weps=(r.P.weps||[]).map(w=>{if(!WP[w.id])return null;return {...WP[w.id],id:w.id,timer:w.timer||0,lv:w.lv||1,shotCount:w.shotCount||0}}).filter(Boolean);
+P={x:num(r.P.x,worldW/2),y:num(r.P.y,worldH/2),hp:num(r.P.hp,ch.hp),mhp:Math.max(1,num(r.P.mhp,ch.hp)),spd:Math.max(1,num(r.P.spd,ch.spd)),
+bdmg:Math.max(1,num(r.P.bdmg,ch.dmg)),dmgM:Math.max(.1,num(r.P.dmgM,1)),atkSpd:Math.max(.1,num(r.P.atkSpd,1)),spdM:Math.max(.1,num(r.P.spdM,1)),
+armor:Math.max(0,num(r.P.armor,0)),regen:Math.max(0,num(r.P.regen,0)),magnet:Math.max(10,num(r.P.magnet,45)),crit:clamp(num(r.P.crit,.05),0,1),
+proj:Math.max(0,Math.floor(num(r.P.proj,0))),xpM:Math.max(.1,num(r.P.xpM,1)),lv:Math.max(1,Math.floor(num(r.P.lv,1))),xp:Math.max(0,num(r.P.xp,0)),
+xpN:Math.max(1,num(r.P.xpN,25)),weps:[],ch,sz:Math.max(8,num(r.P.sz,15)),invT:Math.max(0,num(r.P.invT,0)),
+facing:r.P.facing&&Number.isFinite(r.P.facing.x)&&Number.isFinite(r.P.facing.y)?r.P.facing:{x:1,y:0},shieldT:Math.max(0,num(r.P.shieldT,0))};
+P.hp=clamp(P.hp,0,P.mhp);
+P.weps=(r.P.weps||[]).map(w=>{if(!WP[w.id])return null;return {...WP[w.id],id:w.id,timer:num(w.timer,0),lv:Math.max(1,Math.floor(num(w.lv,1))),shotCount:Math.max(0,Math.floor(num(w.shotCount,0)))}}).filter(Boolean);
 if(!P.weps.length){const wd=WP[ch.wep];P.weps.push({...wd,id:ch.wep,timer:0,lv:1,shotCount:0})}
-gameTime=r.gameTime||0;kills=r.kills||0;coins=r.coins||0;wave=Math.max(1,r.wave||1);waveT=r.waveT||0;spawnT=r.spawnT||0;
-combo=r.combo||0;comboT=r.comboT||0;lastMS=r.lastMS||0;comboSpdB=r.comboSpdB||0;comboShield=r.comboShield||0;
-activeTemps=r.activeTemps||{};tempData=r.tempData||{};
-specCD=r.specCD||0;bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
+gameTime=Math.max(0,num(r.gameTime,0));kills=Math.max(0,Math.floor(num(r.kills,0)));coins=Math.max(0,Math.floor(num(r.coins,0)));wave=Math.max(1,Math.floor(num(r.wave,1)));
+waveT=Math.max(0,num(r.waveT,0));spawnT=Math.max(0,num(r.spawnT,0));
+combo=Math.max(0,Math.floor(num(r.combo,0)));comboT=Math.max(0,num(r.comboT,0));lastMS=Math.max(0,Math.floor(num(r.lastMS,0)));
+comboSpdB=Math.max(0,num(r.comboSpdB,0));comboShield=Math.max(0,num(r.comboShield,0));
+activeTemps=r.activeTemps||{};tempData=r.tempData||{};normalizeTempState();
+specCD=Math.max(0,num(r.specCD,0));bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;
+}catch(e){
+ clearRunSave();
+ state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];inputDir={x:0,y:0};joyAct=false;joyId=null;
+}
 }
 
 // ═══════ COMBO LOGIC ═══════
