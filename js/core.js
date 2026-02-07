@@ -1,18 +1,29 @@
 // Core module: canvas setup, utilities, data tables, shared runtime state, input, and UI helpers.
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let VW,VH,DPR=Math.min(devicePixelRatio,2);
-let bgStars=[],vignetteGrad=null,bgGrad=null;
+let bgPapers=[],bgGrain=[],bgFibers=[],vignetteGrad=null,bgGrad=null;
 function rebuildFxCache(){
-const n=Math.max(30,Math.min(90,Math.floor((VW*VH)/28000)));
-bgStars=Array.from({length:n},()=>({
-x:Math.random()*VW,y:Math.random()*VH,r:Math.random()*1.8+.3,a:Math.random()*.45+.15,par:Math.random()*.22+.04
+const n=Math.max(12,Math.min(28,Math.floor((VW*VH)/78000)));
+bgPapers=Array.from({length:n},()=>({
+x:Math.random()*VW,y:Math.random()*VH,
+w:Math.random()*(14-6)+6,h:Math.random()*(10-4)+4,
+a:Math.random()*(.14-.05)+.05,par:Math.random()*(.08-.03)+.03
+}));
+const gn=Math.max(500,Math.min(1300,Math.floor((VW*VH)/1800)));
+bgGrain=Array.from({length:gn},()=>({
+x:Math.random()*VW,y:Math.random()*VH,r:Math.random()*1.1+.2,a:Math.random()*.12+.04
+}));
+const fn=Math.max(45,Math.min(120,Math.floor((VW*VH)/18000)));
+bgFibers=Array.from({length:fn},()=>({
+x:Math.random()*VW,y:Math.random()*VH,l:Math.random()*36+18,a:Math.random()*Math.PI*2,w:Math.random()*1.3+.6,o:Math.random()*.08+.03
 }));
 bgGrad=X.createRadialGradient(VW/2,VH/2,50,VW/2,VH/2,VW*.7);
-bgGrad.addColorStop(0,'#1c1c3a');
-bgGrad.addColorStop(1,'#0a0a18');
+bgGrad.addColorStop(0,'#2a2d34');
+bgGrad.addColorStop(.62,'#1f232b');
+bgGrad.addColorStop(1,'#161a21');
 vignetteGrad=X.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*.2,VW/2,VH/2,Math.max(VW,VH)*.75);
 vignetteGrad.addColorStop(0,'rgba(0,0,0,0)');
-vignetteGrad.addColorStop(1,'rgba(0,0,0,.35)');
+vignetteGrad.addColorStop(1,'rgba(0,0,0,.3)');
 }
 function resize(){VW=innerWidth;VH=innerHeight;C.width=VW*DPR;C.height=VH*DPR;C.style.width=VW+'px';C.style.height=VH+'px';X.setTransform(DPR,0,0,DPR,0,0);rebuildFxCache()}
 resize();addEventListener('resize',resize);
@@ -211,12 +222,13 @@ C.addEventListener('touchstart',e=>{e.preventDefault();initA();for(const t of e.
 if(state!=='playing'){taps.push({x,y});continue}
 if(Math.hypot(x-(VW-55),y-(VH-100))<38){useSpec();continue}
 if(x>VW-55&&y>VH-48){state='pause';saveRunNow();return}
-if(x<VW*.45&&!joyAct){joyAct=true;joyS={x,y};joyId=t.identifier}
+if(!joyAct){joyAct=true;joyS={x,y};joyId=t.identifier;inputDir={x:0,y:0}}
 else taps.push({x,y})}},{passive:false});
 C.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier===joyId){
 let dx=t.clientX-joyS.x,dy=t.clientY-joyS.y;const d=Math.hypot(dx,dy),m=55;
 if(d>m){dx=dx/d*m;dy=dy/d*m}inputDir=d>8?{x:dx/m,y:dy/m}:{x:0,y:0}}}},{passive:false});
 C.addEventListener('touchend',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===joyId){joyAct=false;joyId=null;inputDir={x:0,y:0}}},{passive:false});
+C.addEventListener('touchcancel',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===joyId){joyAct=false;joyId=null;inputDir={x:0,y:0}}},{passive:false});
 C.addEventListener('click',e=>{initA();if(state!=='playing')taps.push({x:e.clientX,y:e.clientY})});
 addEventListener('beforeunload',()=>saveRunNow());
 function getKI(){let dx=0,dy=0;if(keys.w||keys.arrowup)dy=-1;if(keys.s||keys.arrowdown)dy=1;if(keys.a||keys.arrowleft)dx=-1;if(keys.d||keys.arrowright)dx=1;

@@ -12,16 +12,29 @@ const cx=cam.x+(cam.shake>0?rng(-cam.shake,cam.shake):0);
 const cy=cam.y+(cam.shake>0?rng(-cam.shake,cam.shake):0);
 
 // BG
-X.fillStyle=bgGrad||'#0a0a18';X.fillRect(0,0,VW,VH);
-// Cheap parallax sparkles for depth
-for(const s of bgStars){
- const sx=(s.x-cx*s.par)%VW,sy=(s.y-cy*s.par)%VH;
- X.globalAlpha=s.a;X.fillStyle='#9FA8DA';X.beginPath();X.arc((sx+VW)%VW,(sy+VH)%VH,s.r,0,PI2);X.fill();
+X.fillStyle=bgGrad||'#1f232b';X.fillRect(0,0,VW,VH);
+// Paper flecks
+for(const p of bgPapers){
+ const sx=(p.x-cx*p.par)%VW,sy=(p.y-cy*p.par)%VH;
+ X.globalAlpha=p.a;X.fillStyle='#4a5160';
+ X.fillRect((sx+VW)%VW,(sy+VH)%VH,p.w,p.h);
+}
+// Fine paper grain
+for(const g of bgGrain){
+ X.globalAlpha=g.a;X.fillStyle='#5f6a7f';
+ X.beginPath();X.arc(g.x,g.y,g.r,0,PI2);X.fill();
+}
+// Paper fibers
+X.strokeStyle='rgba(148,166,196,.16)';
+for(const f of bgFibers){
+ X.globalAlpha=f.o;X.lineWidth=f.w;
+ const x2=f.x+Math.cos(f.a)*f.l,y2=f.y+Math.sin(f.a)*f.l;
+ X.beginPath();X.moveTo(f.x,f.y);X.lineTo(x2,y2);X.stroke();
 }
 X.globalAlpha=1;
 
 // Grid
-const gs=80;X.strokeStyle='rgba(80,80,140,.06)';X.lineWidth=1;
+const gs=80;X.strokeStyle='rgba(164,182,212,.06)';X.lineWidth=1;
 for(let gx=-(cx%gs);gx<VW+gs;gx+=gs){X.beginPath();X.moveTo(gx,0);X.lineTo(gx,VH);X.stroke()}
 for(let gy=-(cy%gs);gy<VH+gs;gy+=gs){X.beginPath();X.moveTo(0,gy);X.lineTo(VW,gy);X.stroke()}
 
@@ -41,7 +54,7 @@ gfx.forEach(g=>{const sx=g.x-cx,sy=g.y-cy,a=1-g.t/g.dur;
 // Pickups
 pickups.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,b=Math.sin(gameTime*5+p.x)*3;
  const py=sy+b;
- if(p.type==='xp')dE('⭐',sx,py,14);
+ if(p.type==='xp')dE('🔹',sx,py,14);
  else if(p.type==='coin')dE('🪙',sx,py,14);
  else if(p.type==='hp')dE('💚',sx,py,14);
  else if(p.type==='temp'){
@@ -55,6 +68,7 @@ pickups.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,b=Math.sin(gameTime*5+p.x)*3;
 
 // Enemies
 enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
+ const emoY=sy+e.sz*.06; // optical centering for emoji glyph metrics
  X.fillStyle='rgba(0,0,0,.2)';X.beginPath();X.ellipse(sx,sy+e.sz*.6,e.sz*.7,e.sz*.25,0,0,PI2);X.fill();
  // Elite glow
  if(e.elite){X.globalAlpha=.2+Math.sin(gameTime*6)*.1;X.fillStyle='#FFD700';X.beginPath();X.arc(sx,sy,e.sz+6,0,PI2);X.fill();X.globalAlpha=1}
@@ -67,7 +81,7 @@ enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
  X.fillStyle=eCol;X.beginPath();X.arc(sx,sy,e.sz,0,PI2);X.fill();
  X.globalAlpha=.18;X.fillStyle='#fff';X.beginPath();X.arc(sx-e.sz*.3,sy-e.sz*.35,e.sz*.45,0,PI2);X.fill();X.globalAlpha=1;
  X.strokeStyle=e.elite?'#FFD700':'rgba(255,255,255,.08)';X.lineWidth=e.elite?2:1;X.stroke();
- dE(e.emoji,sx,sy,e.sz*1.3);
+ dE(e.emoji,sx,emoY,e.sz*1.3);
  // Infected marker
  if(e.infected){X.globalAlpha=.5+Math.sin(gameTime*8)*.3;dE('☣️',sx-e.sz*.7,sy-e.sz*.7,10);X.globalAlpha=1}
  // HP bar
@@ -79,10 +93,17 @@ enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
 
 // Projectiles
 projs.forEach(p=>{const sx=p.x-cx,sy=p.y-cy;
- X.globalAlpha=.22;X.fillStyle=p.col||'#fff';X.beginPath();X.arc(sx,sy,p.sz*2.2,0,PI2);X.fill();X.globalAlpha=1;
- X.fillStyle=p.col||'#fff';X.beginPath();X.arc(sx,sy,p.sz,0,PI2);X.fill();
- X.strokeStyle=(p.col||'#fff')+'88';X.lineWidth=p.sz*.6;
- X.beginPath();X.moveTo(sx,sy);X.lineTo(sx-p.vx*.015,sy-p.vy*.015);X.stroke()});
+ if(p.own==='e'){
+  const s=p.sz+1.5,col='#FF3B30';
+  X.fillStyle=col;X.beginPath();
+  X.moveTo(sx,sy-s);X.lineTo(sx+s,sy);X.lineTo(sx,sy+s);X.lineTo(sx-s,sy);X.closePath();X.fill();
+  X.strokeStyle='#FFD9A3';X.lineWidth=1.6;X.stroke();
+ }else{
+  X.globalAlpha=.22;X.fillStyle=p.col||'#fff';X.beginPath();X.arc(sx,sy,p.sz*2.2,0,PI2);X.fill();X.globalAlpha=1;
+  X.fillStyle=p.col||'#fff';X.beginPath();X.arc(sx,sy,p.sz,0,PI2);X.fill();
+  X.strokeStyle=(p.col||'#fff')+'88';X.lineWidth=p.sz*.6;
+  X.beginPath();X.moveTo(sx,sy);X.lineTo(sx-p.vx*.015,sy-p.vy*.015);X.stroke()
+ }});
 
 // Particles
 parts.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,a=clamp(p.life/p.ml,0,1);
@@ -172,10 +193,12 @@ P.weps.forEach((w,i)=>{const wx=14+i*38,wy=VH-42;
  dE(WP[w.id]?.emoji||'?',wx+16,wy+14,15)});
 
 // Joystick
-const jx=75,jy=VH-110;
-X.fillStyle='rgba(255,255,255,.05)';X.beginPath();X.arc(jx,jy,55,0,PI2);X.fill();
-X.strokeStyle='rgba(255,255,255,.1)';X.lineWidth=2;X.stroke();
-X.fillStyle='rgba(255,255,255,.18)';X.beginPath();X.arc(jx+inputDir.x*40,jy+inputDir.y*40,22,0,PI2);X.fill();
+if(joyAct){
+ const jx=joyS.x,jy=joyS.y;
+ X.fillStyle='rgba(255,255,255,.05)';X.beginPath();X.arc(jx,jy,55,0,PI2);X.fill();
+ X.strokeStyle='rgba(255,255,255,.1)';X.lineWidth=2;X.stroke();
+ X.fillStyle='rgba(255,255,255,.18)';X.beginPath();X.arc(jx+inputDir.x*40,jy+inputDir.y*40,22,0,PI2);X.fill();
+}
 
 // Special
 const bx=VW-55,by=VH-100,br=32,rdy=specCD<=0;
