@@ -44,22 +44,43 @@ g.gain.setValueAtTime(p[2],n);g.gain.exponentialRampToValueAtTime(.001,n+.15);o.
 // ═══════ SAVE ═══════
 let save={coins:0,totalKills:0,games:0,bestTime:0,bestWave:0,bestKills:0,bestCombo:0,up:{hp:0,dmg:0,spd:0,armor:0,luck:0,xp:0},unlocked:[0],run:null};
 const SAVE_KEY='bs5',COOKIE_MAX_AGE=60*60*24*365*5;
+const COOKIE_SAFE_BYTES=3800; // practical cap below common ~4KB cookie limit
 function getCookie(name){
 const v=('; '+document.cookie).split('; '+name+'=');
 if(v.length<2)return null;
 return v.pop().split(';').shift();
 }
+function mergeSave(raw){
+if(!raw||typeof raw!=='object')return;
+const merged={...save,...raw};
+if(!merged.up||typeof merged.up!=='object')merged.up={...save.up};
+else merged.up={...save.up,...merged.up};
+if(!Array.isArray(merged.unlocked))merged.unlocked=[0];
+if(merged.run!==null&&typeof merged.run!=='object')merged.run=null;
+save=merged;
+}
 function loadS(){
 try{
 const c=getCookie(SAVE_KEY);
-if(c){save={...save,...JSON.parse(decodeURIComponent(c))};return}
+if(c){mergeSave(JSON.parse(decodeURIComponent(c)));return}
 const s=localStorage.getItem(SAVE_KEY); // one-time migration from old saves
-if(s){save={...save,...JSON.parse(s)};doS();localStorage.removeItem(SAVE_KEY)}
+if(s){mergeSave(JSON.parse(s));doS();localStorage.removeItem(SAVE_KEY)}
 }catch(e){}
 }
 function doS(){
 try{
-document.cookie=`${SAVE_KEY}=${encodeURIComponent(JSON.stringify(save))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+let payload=JSON.stringify(save);
+let enc=encodeURIComponent(payload);
+if(enc.length>COOKIE_SAFE_BYTES&&save.run){
+ // Keep durable/meta progress even if volatile run state is too large for a cookie.
+ const trimmed={...save,run:null};
+ payload=JSON.stringify(trimmed);
+ enc=encodeURIComponent(payload);
+}
+if(enc.length<=COOKIE_SAFE_BYTES){
+ document.cookie=`${SAVE_KEY}=${enc}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+}
+try{localStorage.setItem(SAVE_KEY,payload)}catch(e){}
 }catch(e){}
 }
 loadS();

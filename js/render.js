@@ -113,7 +113,8 @@ parts.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,a=clamp(p.life/p.ml,0,1);
  X.globalAlpha=1});
 
 // Player
-if(P.hp>0){const px=P.x-cx,py=P.y-cy;
+const px=P.x-cx,py=P.y-cy;
+if(P.hp>0){
  X.fillStyle='rgba(0,0,0,.25)';X.beginPath();X.ellipse(px,py+P.sz*.7,P.sz*.7,P.sz*.25,0,0,PI2);X.fill();
  // Shield/Combo shield
  if(P.shieldT>0||comboShield>0){
