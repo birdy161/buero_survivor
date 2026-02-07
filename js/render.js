@@ -25,6 +25,13 @@ const gs=80;X.strokeStyle='rgba(80,80,140,.06)';X.lineWidth=1;
 for(let gx=-(cx%gs);gx<VW+gs;gx+=gs){X.beginPath();X.moveTo(gx,0);X.lineTo(gx,VH);X.stroke()}
 for(let gy=-(cy%gs);gy<VH+gs;gy+=gs){X.beginPath();X.moveTo(0,gy);X.lineTo(VW,gy);X.stroke()}
 
+// World border (visible when reaching map limits)
+const wx=-cx,wy=-cy;
+X.strokeStyle='rgba(255,215,64,.55)';X.lineWidth=4;
+X.strokeRect(wx,wy,worldW,worldH);
+X.strokeStyle='rgba(255,255,255,.2)';X.lineWidth=1;
+X.strokeRect(wx+2,wy+2,worldW-4,worldH-4);
+
 // Ground FX (puddles)
 gfx.forEach(g=>{const sx=g.x-cx,sy=g.y-cy,a=1-g.t/g.dur;
  X.globalAlpha=a*.35;X.fillStyle=g.col;X.beginPath();X.arc(sx,sy,g.r,0,PI2);X.fill();
