@@ -11,8 +11,87 @@ enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 gameTime=0;kills=0;coins=0;wave=1;waveT=0;spawnT=0;
 combo=0;comboT=0;lastMS=0;comboSpdB=0;comboShield=0;
 bossRef=null;specCD=0;upChoices=[];wepState={clicks:0};hitTracker={};
+activeTemps={};tempData={};
 cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='playing';runSaveTimer=0;
 save.games++;save.run=null;doS();
+}
+
+function hasTemp(id){return (activeTemps[id]||0)>0}
+function addTemp(id,dur){
+if(!TEMP_BY_ID[id])return;
+if(dur<=0){applyInstantTemp(id);return}
+activeTemps[id]=Math.max(activeTemps[id]||0,dur);
+if(id==='bubble')tempData.bubbleCharges=3;
+if(id==='vpn')tempData.vpnFirst=true;
+if(id==='drone'){tempData.droneCd=0;tempData.droneA=0}
+if(id==='alarm')tempData.alarmPulse=0;
+fTxt(P.x,P.y-35,`${TEMP_BY_ID[id].emoji} ${TEMP_BY_ID[id].name}`,'#80DEEA',14);
+}
+function applyInstantTemp(id){
+if(id!=='meeting')return;
+for(const e of enemies){
+ if(e.hp<=0||e.isBoss)continue;
+ if(dst(P,e)<260)e.freezeT=Math.max(e.freezeT||0,2);
+}
+burst(P.x,P.y,20,'#80DEEA',180,5,.45);sfx('freeze');
+}
+function spawnTempPickup(x,y,chance){
+if(Math.random()>=chance)return;
+const t=TEMP_ITEMS[rngI(0,TEMP_ITEMS.length-1)];
+pickups.push({x:x+rng(-12,12),y:y+rng(-12,12),type:'temp',id:t.id,life:12});
+}
+function getAtkSpeedBonus(){
+let b=0;
+if(hasTemp('overclock'))b+=Math.min(0.7,(TEMP_BY_ID.overclock.dur-activeTemps.overclock)*0.07);
+if(hasTemp('overtime')&&P.hp/P.mhp<.45)b+=0.35;
+return b;
+}
+function getMoveSpeedBonus(){
+let b=0;
+if(hasTemp('drift'))b+=0.4;
+if(hasTemp('overtime')&&P.hp/P.mhp<.45)b+=0.2;
+return b;
+}
+function getDamageBonus(){
+let b=0;
+if(hasTemp('overtime')&&P.hp/P.mhp<.45)b+=0.45;
+return b;
+}
+function getArmorBonus(){
+return hasTemp('ergo')?2:0;
+}
+function tickTemps(dt){
+if(!P)return;
+for(const id in activeTemps){
+ activeTemps[id]-=dt;
+ if(activeTemps[id]<=0){
+  delete activeTemps[id];
+  if(id==='bubble')delete tempData.bubbleCharges;
+  if(id==='vpn')delete tempData.vpnFirst;
+  if(id==='drone'){delete tempData.droneCd;delete tempData.droneA}
+  if(id==='alarm')delete tempData.alarmPulse;
+ }
+}
+if(hasTemp('overtime'))P.hp=Math.max(1,P.hp-2*dt);
+if(hasTemp('alarm')){
+ tempData.alarmPulse=(tempData.alarmPulse||0)+dt;
+ if(tempData.alarmPulse>=1.2){
+  tempData.alarmPulse=0;
+  for(const e of enemies){if(e.hp>0&&dst(P,e)<220)e.fearT=Math.max(e.fearT||0,1.2)}
+  burst(P.x,P.y,8,'#FF7043',120,4,.25);
+ }
+}
+if(hasTemp('drone')){
+ tempData.droneA=(tempData.droneA||0)+dt*3.2;
+ tempData.droneCd=(tempData.droneCd||0)-dt;
+ if(tempData.droneCd<=0){
+  tempData.droneCd=.55;
+  const dx=P.x+Math.cos(tempData.droneA)*35,dy=P.y+Math.sin(tempData.droneA)*35;
+  let target=null,nd=140;
+  for(const e of enemies){if(e.hp<=0)continue;const d=dst({x:dx,y:dy},e);if(d<nd){nd=d;target=e}}
+  if(target){hurtE(target,Math.floor(P.bdmg*.7),true);addP(dx,dy,0,0,.2,'#80DEEA',4);sfx('xp')}
+ }
+}
 }
 
 function saveRunNow(){
@@ -20,6 +99,7 @@ if(!P||state==='menu'||state==='charsel'||state==='shop'||state==='stats'||state
 save.run={
 v:1,selChar,state:'pause',
 gameTime,kills,coins,wave,waveT,spawnT,combo,comboT,lastMS,comboSpdB,comboShield,specCD,
+activeTemps,tempData,
 P:{
 x:P.x,y:P.y,hp:P.hp,mhp:P.mhp,spd:P.spd,bdmg:P.bdmg,dmgM:P.dmgM,atkSpd:P.atkSpd,spdM:P.spdM,armor:P.armor,regen:P.regen,
 magnet:P.magnet,crit:P.crit,proj:P.proj,xpM:P.xpM,lv:P.lv,xp:P.xp,xpN:P.xpN,sz:P.sz,invT:P.invT,shieldT:P.shieldT,
@@ -46,6 +126,7 @@ P.weps=(r.P.weps||[]).map(w=>{if(!WP[w.id])return null;return {...WP[w.id],id:w.
 if(!P.weps.length){const wd=WP[ch.wep];P.weps.push({...wd,id:ch.wep,timer:0,lv:1,shotCount:0})}
 gameTime=r.gameTime||0;kills=r.kills||0;coins=r.coins||0;wave=Math.max(1,r.wave||1);waveT=r.waveT||0;spawnT=r.spawnT||0;
 combo=r.combo||0;comboT=r.comboT||0;lastMS=r.lastMS||0;comboSpdB=r.comboSpdB||0;comboShield=r.comboShield||0;
+activeTemps=r.activeTemps||{};tempData=r.tempData||{};
 specCD=r.specCD||0;bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;
 }
@@ -114,7 +195,7 @@ bossRef=bt;enemies.push(bt);sfx('boss');
 function fireW(w){
 if(!P)return;
 const cdmg=comboDmg(); // combo passive DMG
-const dmg=Math.floor(w.dm*P.bdmg*P.dmgM*cdmg);
+const dmg=Math.floor(w.dm*P.bdmg*P.dmgM*(1+getDamageBonus())*cdmg);
 const shots=1+P.proj;
 let near=null,nd=450;
 for(const e of enemies){if(e.hp<=0)continue;const d=dst(P,e);if(d<nd){nd=d;near=e}}
@@ -163,7 +244,7 @@ for(let s=0;s<shots;s++){
   case'grease':pr.aoe=35;break; // Schnitzel
   case'wetfloor':pr.aoe=25;break; // Mopp
   case'infect':break; // Spritze
-  case'goldrush':pr.pierce=99;break; // Kreditkarte pierces all
+  case'goldrush':pr.pierce=99;break; // Megafon durchdringt alle
   case'pin':break; // Tacker
   case'burn':pr.aoe=40;break; // Heißer Kaffee
   case'freeze':break; // Kalter Kaffee
@@ -171,12 +252,25 @@ for(let s=0;s<shots;s++){
  }
  projs.push(pr);
 }
+
+if(hasTemp('staplerfury')&&near){
+ for(let i=0;i<2;i++){
+  const a=ang(P,near)+rng(-.28,.28);
+  projs.push({x:P.x,y:P.y,vx:Math.cos(a)*420,vy:Math.sin(a)*420,dmg:Math.floor(dmg*.45),col:'#EF5350',sz:3,life:.7,own:'p',mech:'pin',wid:'stapler',pierce:0,retT:0,aoe:0});
+ }
+}
 }
 
 // ═══════ HURT ENEMY ═══════
 function hurtE(e,dmg,noCrit){
 if(!e||e.hp<=0||!P)return;
 let cr=!noCrit&&Math.random()<P.crit,fd=cr?dmg*2:dmg;
+if(hasTemp('vpn')){
+ if(tempData.vpnFirst)cr=true;
+ tempData.vpnFirst=false;
+ delete activeTemps.vpn;
+}
+fd=cr?dmg*2:dmg;
 // Frozen enemies take 2x damage!
 if(e.freezeT>0)fd=Math.floor(fd*2);
 e.hp-=fd;e.flash=.12;
@@ -202,7 +296,7 @@ switch(pr.mech){
   gfx.push({x:e.x,y:e.y,r:28,dps:3,dur:4,slow:.3,col:'#64B5F6',t:0});break;}
  case'infect':{ // Spritze: infect enemy
   e.infected=true;break;}
- case'goldrush':{ // Kreditkarte: coin drop on hit
+ case'goldrush':{ // Megafon: Bonus-Münze bei Treffer
   if(Math.random()<.25){pickups.push({x:e.x+rng(-8,8),y:e.y+rng(-8,8),type:'coin',val:1,life:12});sfx('coin')}
   break;}
  case'pin':{ // Tacker: pin in place
@@ -230,6 +324,8 @@ const cxp=comboXp(); // combo passive XP bonus
 pickups.push({x:e.x,y:e.y,type:'xp',val:Math.floor(e.xp*P.xpM*cxp),life:15});
 if(Math.random()<.3)pickups.push({x:e.x+rng(-10,10),y:e.y+rng(-10,10),type:'coin',val:e.co||1,life:15});
 if(Math.random()<.03)pickups.push({x:e.x,y:e.y,type:'hp',val:Math.floor(P.mhp*.1),life:15});
+if(hasTemp('expense'))for(let i=0;i<2;i++)pickups.push({x:e.x+rng(-14,14),y:e.y+rng(-14,14),type:'coin',val:1,life:10});
+spawnTempPickup(e.x,e.y,e.isBoss?.35:.04);
 burst(e.x,e.y,e.elite?15:8,e.elite?'#FFD700':'#aaa',100,5,.4);sfx('kill');
 
 // INFECT chain explosion!
@@ -240,14 +336,22 @@ if(e.infected){
 }
 
 if(e.isBoss){bossRef=null;burst(e.x,e.y,30,'#FFD700',180,8,.7);sfx('boom');cam.shake=15;
- for(let i=0;i<10;i++)pickups.push({x:e.x+rng(-50,50),y:e.y+rng(-50,50),type:'coin',val:Math.floor(e.co/10),life:15})}
+ for(let i=0;i<10;i++)pickups.push({x:e.x+rng(-50,50),y:e.y+rng(-50,50),type:'coin',val:Math.floor(e.co/10),life:15});
+ spawnTempPickup(e.x,e.y,.9)}
 // Clean hitTracker
 delete hitTracker[''+e.uid];
 }
 
 function pHurt(d){
 if(!P||P.invT>0||P.shieldT>0||comboShield>0)return;
-const fd=Math.max(1,d-P.armor);P.hp-=fd;P.invT=.4;
+if((tempData.bubbleCharges||0)>0){
+ tempData.bubbleCharges--;P.invT=.15;
+ burst(P.x,P.y,8,'#B3E5FC',90,4,.25);
+ for(const e of enemies){if(e.hp>0&&dst(P,e)<90){const a=ang(P,e);e.x+=Math.cos(a)*35;e.y+=Math.sin(a)*35}}
+ if(tempData.bubbleCharges<=0)delete activeTemps.bubble;
+ return;
+}
+const fd=Math.max(1,d-(P.armor+getArmorBonus()));P.hp-=fd;P.invT=.4;
 fTxt(P.x,P.y-20,'-'+fd,'#FF1744',18);burst(P.x,P.y,5,'#FF1744',80,4,.3);
 sfx('hurt');cam.shake=5;
 // Combo broken by damage!
@@ -259,7 +363,7 @@ function addXP(v){if(!P)return;P.xp+=v;while(P.xp>=P.xpN){P.xp-=P.xpN;P.lv++;
 P.xpN=Math.floor(P.xpN*1.28+15);sfx('lvl');burst(P.x,P.y,18,'#FFD740',120,5,.5);
 state='upgrade';makeUC();saveRunNow()}}
 
-function comboDmg(){return 1+Math.min(combo*.015,1)} // +1.5% per combo, max +100%
+function comboDmg(){const b=1+Math.min(combo*.015,1);return hasTemp('poster')?b*2:b} // +1.5% per combo, max +100%
 function comboXp(){return 1+Math.min(combo*.012,0.8)} // +1.2% per combo, max +80%
 function comboSpd(){return comboSpdB>0?.25:Math.min(combo*.008,.3)} // max +30%
 
@@ -276,7 +380,7 @@ switch(ch.spec){
  case'sweep':enemies.forEach(e=>{if(e.hp>0&&dst(P,e)<180){const a=ang(P,e);e.x+=Math.cos(a)*90;e.y+=Math.sin(a)*90;hurtE(e,Math.floor(P.bdmg*1.5))}});
   gfx.push({x:P.x,y:P.y,r:80,dps:5,dur:5,slow:.4,col:'#64B5F6',t:0});burst(P.x,P.y,15,'#9C27B0',130,5,.5);break;
  case'immune':P.shieldT=5;burst(P.x,P.y,12,'#E91E63',80,4,.4);fTxt(P.x,P.y-30,'📋 KRANK!','#E91E63',18);break;
- case'nuke':enemies.forEach(e=>{if(e.hp>0)hurtE(e,Math.floor(P.bdmg*5))});burst(P.x,P.y,30,'#FFD700',200,8,.7);cam.shake=15;sfx('boom');fTxt(P.x,P.y-30,'💸 GEFEUERT!','#FFD700',22);break;
+ case'nuke':enemies.forEach(e=>{if(e.hp>0)hurtE(e,Math.floor(P.bdmg*5))});burst(P.x,P.y,30,'#FFD700',200,8,.7);cam.shake=15;sfx('boom');fTxt(P.x,P.y-30,'📢 STREIK!','#FFD700',22);break;
 }}
 
 function gameOver(){state='gameover';save.totalKills+=kills;save.coins+=coins;
@@ -311,7 +415,7 @@ if(state!=='playing'||!P)return;
 gameTime+=dt;getKI();
 
 // Movement (with combo speed bonus)
-const spd=P.spd*P.spdM*(1+comboSpd());
+const spd=P.spd*P.spdM*(1+comboSpd()+getMoveSpeedBonus());
 P.x+=inputDir.x*spd*dt;P.y+=inputDir.y*spd*dt;
 P.x=clamp(P.x,20,worldW-20);P.y=clamp(P.y,20,worldH-20);
 if(inputDir.x||inputDir.y)P.facing={x:inputDir.x,y:inputDir.y};
@@ -322,9 +426,11 @@ if(comboShield>0)comboShield-=dt;
 if(comboSpdB>0)comboSpdB-=dt;
 if(specCD>0)specCD-=dt;
 if(P.regen>0)P.hp=Math.min(P.mhp,P.hp+P.regen*dt);
+if(hasTemp('ergo'))P.hp=Math.min(P.mhp,P.hp+.7*dt);
+tickTemps(dt);
 
 // Combo timer
-if(comboT>0){comboT-=dt;if(comboT<=0){combo=0;lastMS=0}}
+if(comboT>0){comboT-=dt*(hasTemp('poster')?.55:1);if(comboT<=0){combo=0;lastMS=0}}
 
 // Waves — 25s per wave (faster!)
 waveT+=dt;if(waveT>=25){waveT=0;wave++;sfx('lvl');if(wave%5===0)spawnBoss()}
@@ -338,7 +444,7 @@ if(spawnT>=sr&&enemies.length<50+wave*5){spawnT=0;
 
 // Fire weapons
 P.weps.forEach(w=>{w.timer=(w.timer||0)-dt;
- if(w.timer<=0){w.timer=(w.rt||.4)/(1+P.atkSpd*.3);fireW(w)}});
+ if(w.timer<=0){w.timer=(w.rt||.4)/(1+P.atkSpd*.3+getAtkSpeedBonus());fireW(w)}});
 
 // Projectiles
 for(let i=projs.length-1;i>=0;i--){
@@ -358,7 +464,9 @@ for(let i=projs.length-1;i>=0;i--){
     if(p.pierce>0){p.pierce--;p.dmg=Math.floor(p.dmg*.85)}
     else if(p.mech!=='boomkb'){projs.splice(i,1);rm=true;break}}}
   if(rm)continue;
- }else{if(dst(p,P)<P.sz+p.sz){pHurt(p.dmg);projs.splice(i,1)}}
+ }else{if(dst(p,P)<P.sz+p.sz){
+   if(hasTemp('firewall')){coins+=1;addXP(2);sfx('coin');projs.splice(i,1);continue}
+   pHurt(p.dmg);projs.splice(i,1)}}
 }
 
 // Ground effects (puddles)
@@ -380,8 +488,10 @@ for(let i=enemies.length-1;i>=0;i--){
  if(e.freezeT>0){ms=0;e.freezeT-=dt;} // Frozen = can't move
  else if(e.pinT>0){ms=0;e.pinT-=dt;} // Pinned = can't move
  else if(e.slowT>0){ms*=.3;e.slowT-=dt;} // Slowed
+ if(e.fearT>0)e.fearT-=dt;
+ if(hasTemp('jam')&&dst(P,e)<130){ms*=.2;if(Math.random()<dt*2)e.pinT=Math.max(e.pinT,.3)}
 
- const ea=ang(e,P),ed=dst(e,P);
+const ea=ang(e,P),ed=dst(e,P);
 
  // Charge attack (Deadline, Wütender Kunde)
  if(e.charge&&!e.isBoss){
@@ -392,10 +502,18 @@ for(let i=enemies.length-1;i>=0;i--){
   if(e.chargeT>0){e.chargeT-=dt;ms=e.spd*4;const ca=e.chA||ea;
    e.x+=Math.cos(ca)*ms*dt;e.y+=Math.sin(ca)*ms*dt}
   else{e.x+=Math.cos(ea)*ms*dt;e.y+=Math.sin(ea)*ms*dt}
- }else if(ms>0){e.x+=Math.cos(ea)*ms*dt;e.y+=Math.sin(ea)*ms*dt}
+ }else if(ms>0){
+  const ma=e.fearT>0?ea+PI:ea;
+  e.x+=Math.cos(ma)*ms*dt;e.y+=Math.sin(ma)*ms*dt
+ }
 
  // Contact damage
- if(ed<P.sz+e.sz)pHurt(e.dmg);
+ if(ed<P.sz+e.sz){
+  if(hasTemp('leave')||hasTemp('drift')){
+   const ka=ang(P,e);e.x+=Math.cos(ka)*50;e.y+=Math.sin(ka)*50;
+   if(hasTemp('drift'))hurtE(e,Math.floor(P.bdmg*.25),true);
+  }else pHurt(e.dmg);
+ }
 
  // Ranged (Drucker)
  if(e.ranged&&ms>0){e.atkT=(e.atkT||0)+dt;if(e.atkT>1.2){e.atkT=0;
@@ -432,6 +550,7 @@ for(let i=pickups.length-1;i>=0;i--){
   if(p.type==='xp'){addXP(p.val);sfx('xp')}
   else if(p.type==='coin'){coins+=p.val;sfx('coin')}
   else if(p.type==='hp'){P.hp=Math.min(P.mhp,P.hp+p.val);fTxt(P.x,P.y-20,'+'+p.val,'#4CAF50',16);sfx('xp')}
+  else if(p.type==='temp'){const t=TEMP_BY_ID[p.id];if(t){addTemp(t.id,t.dur);sfx('power')}}
   pickups.splice(i,1)}}
 
 // Particles

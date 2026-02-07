@@ -75,7 +75,7 @@ const CHARS=[
 {id:2,name:'Koch',emoji:'👨‍🍳',desc:'Tank mit Soße',hp:130,spd:110,dmg:16,color:'#FF9800',cost:200,wep:'food',spec:'soup',sCD:10,sN:'🍜 Kantinenkeule'},
 {id:3,name:'Hausmeister',emoji:'🧹',desc:'Mopp-Fu Meister',hp:95,spd:140,dmg:13,color:'#9C27B0',cost:180,wep:'mop',spec:'sweep',sCD:13,sN:'🌊 Großputz'},
 {id:4,name:'Ärztin',emoji:'👩‍⚕️',desc:'Passiv-Regen',hp:75,spd:148,dmg:9,color:'#E91E63',cost:300,wep:'syringe',spec:'immune',sCD:20,sN:'📋 Krankschreibung'},
-{id:5,name:'CEO',emoji:'🦸',desc:'OP. Teuer.',hp:170,spd:180,dmg:22,color:'#FFD700',cost:999,wep:'creditcard',spec:'nuke',sCD:25,sN:'💸 Massenentlassung'},
+{id:5,name:'Betriebsrat',emoji:'✊',desc:'Anti-Stress Tank. Teuer.',hp:170,spd:180,dmg:22,color:'#FFD700',cost:999,wep:'creditcard',spec:'nuke',sCD:25,sN:'📢 Streikaufruf'},
 ];
 let selChar=0;
 
@@ -115,8 +115,8 @@ mop:{emoji:'🧹',name:'Mopp',ps:270,dm:1.1,rt:.38,col:'#CE93D8',
  desc:'Knockback + nasser Boden (Rutschgefahr)!',mech:'wetfloor'},
 syringe:{emoji:'💉',name:'Spritze',ps:360,dm:.85,rt:.32,col:'#F48FB1',
  desc:'Infiziert! Tod → Kettenexplosion!',mech:'infect'},
-creditcard:{emoji:'💳',name:'Kreditkarte',ps:420,dm:1.6,rt:.22,col:'#FFD700',
- desc:'Durchbohrt ALLE + droppt Münzen!',mech:'goldrush'},
+creditcard:{emoji:'📣',name:'Megafon',ps:420,dm:1.6,rt:.22,col:'#FFD700',
+ desc:'Durchdringt Reihen + Bonus-Münzen!',mech:'goldrush'},
 stapler:{emoji:'📌',name:'Tacker',ps:450,dm:.5,rt:.1,col:'#EF5350',
  desc:'Rapid-Fire! Nagelt Feinde 0.5s fest!',mech:'pin'},
 hotcoffee:{emoji:'☕',name:'Heißer Kaffee',ps:250,dm:1.1,rt:.5,col:'#795548',
@@ -165,6 +165,24 @@ const SHOP=[
 {id:'xp',name:'Fortbildung',emoji:'🎓',desc:'+10% XP',cost:55,max:8},
 ];
 const WNAMES=['08:00 — Arbeitsbeginn!','09:00 — Emails!','10:00 — Meeting!','11:00 — Kaffee leer!','12:00 — Mittagschaos!','13:00 — Food Coma!','14:00 — Tief!','15:00 — PPT-Hölle!','16:00 — Deadline!','17:00 — KEIN Feierabend!','18:00 — Überstunden!','19:00 — Noch hier?!','20:00 — Nachtschicht!','21:00 — Wahnsinn!','22:00 — APOKALYPSE!'];
+const TEMP_ITEMS=[
+{id:'bubble',emoji:'🫧',name:'Bubble Wrap Suit',dur:8,desc:'3 Treffer absorbieren + Knockback'},
+{id:'drift',emoji:'🪑',name:'Office Chair Drift',dur:6,desc:'+40% Speed, Kontakt rammt Gegner'},
+{id:'staplerfury',emoji:'📎',name:'Red Stapler Fury',dur:7,desc:'Zusätzliche Miniprojektile'},
+{id:'vpn',emoji:'🛡️',name:'VPN Cloak',dur:5,desc:'Unsichtbar bis Angriff, erster Hit immer Krit'},
+{id:'overclock',emoji:'☕',name:'Coffee Overclock',dur:10,desc:'Feuerrate skaliert jede Sekunde hoch'},
+{id:'firewall',emoji:'🔥',name:'Firewall Badge',dur:8,desc:'Blockt Fernkampf-Projektile, gibt XP/Münzen'},
+{id:'leave',emoji:'🏖️',name:'Paid Leave',dur:6,desc:'Kein Kontaktschaden + Pushback'},
+{id:'meeting',emoji:'❄️',name:'Meeting Cancelled',dur:0,desc:'Sofortiger Freeze-Puls'},
+{id:'expense',emoji:'🧾',name:'Expense Report',dur:12,desc:'Kills droppen Bonus-Münzen'},
+{id:'ergo',emoji:'🧘',name:'Ergonomic Aura',dur:10,desc:'Regen + temporäre Rüstung'},
+{id:'jam',emoji:'🖨️',name:'Printer Jam Field',dur:7,desc:'Nahbereich stark verlangsamt'},
+{id:'drone',emoji:'🤖',name:'IT Helpdesk Drone',dur:9,desc:'Orbit-Drohne zapt Gegner'},
+{id:'poster',emoji:'📌',name:'Motivation Poster',dur:8,desc:'Combo fällt langsamer, Combo-DMG x2'},
+{id:'overtime',emoji:'⏱️',name:'Overtime Rage',dur:6,desc:'Low-HP Berserk mit HP-Drain'},
+{id:'alarm',emoji:'🚨',name:'Fire Drill Alarm',dur:5,desc:'Periodischer Furcht-Puls'},
+];
+const TEMP_BY_ID=Object.fromEntries(TEMP_ITEMS.map(t=>[t.id,t]));
 
 // ═══════ PARTICLES ═══════
 let parts=[];
@@ -181,6 +199,7 @@ let bossRef=null,specCD=0,worldW=3000,worldH=3000,menuA=0;
 let cam={x:0,y:0,shake:0};
 let inputDir={x:0,y:0},joyAct=false,joyS={x:0,y:0},joyId=null,keys={},taps=[],upChoices=[];
 let runSaveTimer=0;
+let activeTemps={},tempData={};
 // Weapon state tracking
 let wepState={clicks:0}; // for mouse multi-click
 let hitTracker={}; // for pencil stacking

@@ -40,8 +40,18 @@ gfx.forEach(g=>{const sx=g.x-cx,sy=g.y-cy,a=1-g.t/g.dur;
 
 // Pickups
 pickups.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,b=Math.sin(gameTime*5+p.x)*3;
- if(p.type==='xp')dE('⭐',sx,sy+b,14);else if(p.type==='coin')dE('🪙',sx,sy+b,14);
- else dE('💚',sx,sy+b,14)});
+ const py=sy+b;
+ if(p.type==='xp')dE('⭐',sx,py,14);
+ else if(p.type==='coin')dE('🪙',sx,py,14);
+ else if(p.type==='hp')dE('💚',sx,py,14);
+ else if(p.type==='temp'){
+  const t=TEMP_BY_ID[p.id],col='#00E5FF';
+  X.strokeStyle=col;X.lineWidth=2.2;
+  X.beginPath();X.moveTo(sx,py-16);X.lineTo(sx-14,py+10);X.lineTo(sx+14,py+10);X.closePath();X.stroke();
+  X.globalAlpha=.18;X.fillStyle=col;X.beginPath();X.moveTo(sx,py-16);X.lineTo(sx-14,py+10);X.lineTo(sx+14,py+10);X.closePath();X.fill();X.globalAlpha=1;
+  dE(t?t.emoji:'✨',sx,py+1,15);
+ }
+});
 
 // Enemies
 enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
@@ -94,6 +104,11 @@ if(P.hp>0){const px=P.x-cx,py=P.y-cy;
   X.globalAlpha=.24;X.fillStyle='#fff';X.beginPath();X.arc(px-P.sz*.35,py-P.sz*.4,P.sz*.48,0,PI2);X.fill();X.globalAlpha=1;
   X.strokeStyle='rgba(255,255,255,.3)';X.lineWidth=2;X.stroke();
   dE(P.ch.emoji,px,py,P.sz*1.6)}}
+if(hasTemp('drone')){
+ const da=tempData.droneA||0,dx=px+Math.cos(da)*35,dy=py+Math.sin(da)*35;
+ X.globalAlpha=.25;X.fillStyle='#80DEEA';X.beginPath();X.arc(dx,dy,12,0,PI2);X.fill();X.globalAlpha=1;
+ dE('🤖',dx,dy,13);
+}
 
 // Vignette for contrast depth
 if(vignetteGrad){X.fillStyle=vignetteGrad;X.fillRect(0,0,VW,VH)}
@@ -117,6 +132,16 @@ dT('⏱ '+fmtT(gameTime),12,38,11,'rgba(255,255,255,.6)','left',true);
 dT('🌊 '+wn,VW/2,38,9,'rgba(255,200,100,.6)','center',true);
 dT('💀 '+kills,VW-12,15,14,'#fff','right',true);
 dT('🪙 '+coins,VW-12,35,12,'#FFD740','right',true);
+const activeKeys=Object.keys(activeTemps).sort((a,b)=>activeTemps[b]-activeTemps[a]).slice(0,4);
+if(activeKeys.length){
+ const rowH=23,padTop=14;
+ X.fillStyle='rgba(0,0,0,.28)';X.beginPath();X.roundRect(10,50,320,padTop+activeKeys.length*rowH,8);X.fill();
+ dT('AKTIVE BONI',16,57,9,'#80DEEA','left',true);
+ activeKeys.forEach((id,i)=>{const t=TEMP_BY_ID[id];if(!t)return;
+  const y=71+i*rowH;
+  dT(`${t.emoji} ${t.name} (${Math.ceil(activeTemps[id])}s)`,16,y,9,'#B2EBF2','left',true);
+  dT(`${t.desc}`,16,y+10,8,'rgba(178,235,242,.75)','left')});
+}
 
 // ═══════ COMBO DISPLAY ═══════
 if(combo>=3){
