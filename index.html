@@ -11,7 +11,20 @@
 <script>
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let VW,VH,DPR=Math.min(devicePixelRatio,2);
-function resize(){VW=innerWidth;VH=innerHeight;C.width=VW*DPR;C.height=VH*DPR;C.style.width=VW+'px';C.style.height=VH+'px';X.setTransform(DPR,0,0,DPR,0,0)}
+let bgStars=[],vignetteGrad=null,bgGrad=null;
+function rebuildFxCache(){
+const n=Math.max(30,Math.min(90,Math.floor((VW*VH)/28000)));
+bgStars=Array.from({length:n},()=>({
+x:Math.random()*VW,y:Math.random()*VH,r:Math.random()*1.8+.3,a:Math.random()*.45+.15,par:Math.random()*.22+.04
+}));
+bgGrad=X.createRadialGradient(VW/2,VH/2,50,VW/2,VH/2,VW*.7);
+bgGrad.addColorStop(0,'#1c1c3a');
+bgGrad.addColorStop(1,'#0a0a18');
+vignetteGrad=X.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*.2,VW/2,VH/2,Math.max(VW,VH)*.75);
+vignetteGrad.addColorStop(0,'rgba(0,0,0,0)');
+vignetteGrad.addColorStop(1,'rgba(0,0,0,.35)');
+}
+function resize(){VW=innerWidth;VH=innerHeight;C.width=VW*DPR;C.height=VH*DPR;C.style.width=VW+'px';C.style.height=VH+'px';X.setTransform(DPR,0,0,DPR,0,0);rebuildFxCache()}
 resize();addEventListener('resize',resize);
 const PI=Math.PI,PI2=PI*2,rng=(a,b)=>Math.random()*(b-a)+a,rngI=(a,b)=>Math.floor(rng(a,b+1));
 const dst=(a,b)=>Math.hypot(b.x-a.x,b.y-a.y),ang=(a,b)=>Math.atan2(b.y-a.y,b.x-a.x),lerp=(a,b,t)=>a+(b-a)*t,clamp=(v,l,h)=>Math.max(l,Math.min(h,v));
@@ -682,8 +695,13 @@ const cx=cam.x+(cam.shake>0?rng(-cam.shake,cam.shake):0);
 const cy=cam.y+(cam.shake>0?rng(-cam.shake,cam.shake):0);
 
 // BG
-const bg=X.createRadialGradient(VW/2,VH/2,50,VW/2,VH/2,VW*.7);
-bg.addColorStop(0,'#1c1c3a');bg.addColorStop(1,'#0a0a18');X.fillStyle=bg;X.fillRect(0,0,VW,VH);
+X.fillStyle=bgGrad||'#0a0a18';X.fillRect(0,0,VW,VH);
+// Cheap parallax sparkles for depth
+for(const s of bgStars){
+ const sx=(s.x-cx*s.par)%VW,sy=(s.y-cy*s.par)%VH;
+ X.globalAlpha=s.a;X.fillStyle='#9FA8DA';X.beginPath();X.arc((sx+VW)%VW,(sy+VH)%VH,s.r,0,PI2);X.fill();
+}
+X.globalAlpha=1;
 
 // Grid
 const gs=80;X.strokeStyle='rgba(80,80,140,.06)';X.lineWidth=1;
@@ -711,8 +729,9 @@ enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
  // Pin visual
  if(e.pinT>0){X.fillStyle='rgba(255,50,50,.25)';X.beginPath();X.arc(sx,sy,e.sz+3,0,PI2);X.fill()}
  // Body
- X.fillStyle=e.flash>.01?'#fff':e.freezeT>0?'#88EEFF':e.slowT>0?'#88ccff':'#3a3a5a';
- X.beginPath();X.arc(sx,sy,e.sz,0,PI2);X.fill();
+ const eCol=e.flash>.01?'#fff':e.freezeT>0?'#88EEFF':e.slowT>0?'#88ccff':'#3a3a5a';
+ X.fillStyle=eCol;X.beginPath();X.arc(sx,sy,e.sz,0,PI2);X.fill();
+ X.globalAlpha=.18;X.fillStyle='#fff';X.beginPath();X.arc(sx-e.sz*.3,sy-e.sz*.35,e.sz*.45,0,PI2);X.fill();X.globalAlpha=1;
  X.strokeStyle=e.elite?'#FFD700':'rgba(255,255,255,.08)';X.lineWidth=e.elite?2:1;X.stroke();
  dE(e.emoji,sx,sy,e.sz*1.3);
  // Infected marker
@@ -726,6 +745,7 @@ enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
 
 // Projectiles
 projs.forEach(p=>{const sx=p.x-cx,sy=p.y-cy;
+ X.globalAlpha=.22;X.fillStyle=p.col||'#fff';X.beginPath();X.arc(sx,sy,p.sz*2.2,0,PI2);X.fill();X.globalAlpha=1;
  X.fillStyle=p.col||'#fff';X.beginPath();X.arc(sx,sy,p.sz,0,PI2);X.fill();
  X.strokeStyle=(p.col||'#fff')+'88';X.lineWidth=p.sz*.6;
  X.beginPath();X.moveTo(sx,sy);X.lineTo(sx-p.vx*.015,sy-p.vy*.015);X.stroke()});
@@ -747,8 +767,12 @@ if(P.hp>0){const px=P.x-cx,py=P.y-cy;
   X.beginPath();X.arc(px,py,P.sz+10,0,PI2);X.stroke()}
  const blink=P.invT>0&&Math.floor(P.invT*10)%2===0;
  if(!blink){X.fillStyle=P.ch.color;X.beginPath();X.arc(px,py,P.sz,0,PI2);X.fill();
+  X.globalAlpha=.24;X.fillStyle='#fff';X.beginPath();X.arc(px-P.sz*.35,py-P.sz*.4,P.sz*.48,0,PI2);X.fill();X.globalAlpha=1;
   X.strokeStyle='rgba(255,255,255,.3)';X.lineWidth=2;X.stroke();
   dE(P.ch.emoji,px,py,P.sz*1.6)}}
+
+// Vignette for contrast depth
+if(vignetteGrad){X.fillStyle=vignetteGrad;X.fillRect(0,0,VW,VH)}
 
 rHUD();
 }
