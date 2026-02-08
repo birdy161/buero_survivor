@@ -67,10 +67,12 @@ if(waveT<=0){
   const sp=rollAmbientSpecial();
   if(sp==='micromanager'){
    const role=(BALANCE.director.specialEnemies?.micromanager?.budgetRole)||'fast';
-   if(spendDirector(role))spawnE({special:'micromanager'});
+   if(directorBudget>=roleCost(role))spendDirector(role); // optional budget spend
+   spawnE({special:'micromanager'});
   }else if(sp==='sniper'){
    const role=(BALANCE.director.specialEnemies?.sniper?.budgetRole)||'fast';
-   if(spendDirector(role))spawnE({special:'sniper',edgeSpawn:true});
+   if(directorBudget>=roleCost(role))spendDirector(role); // optional budget spend
+   spawnE({special:'sniper',edgeSpawn:true});
   }else{
    const role=chooseRoleByMix(wave);
    if(spendDirector(role))spawnE({role});

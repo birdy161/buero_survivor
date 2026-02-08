@@ -60,7 +60,7 @@ const BALANCE={
  },
  },
  waves:{
-  breakDuration:6,
+  breakDuration:3,
   baseEnemyCount:12,
   perWaveEnemyCount:5,
   spawnIntervalBase:1.4,
@@ -80,6 +80,7 @@ const BALANCE={
   hold:{
    radius:115,
    targetTime:12,
+   timeout:22,
    decayPerSec:1.4,
    rewardCoins:20,
    rewardShield:2.5
@@ -88,20 +89,25 @@ const BALANCE={
    radius:26,
    hp:520,
    duration:22,
+   timeout:22,
    pulseEvery:1.4,
    pulseRadius:150,
    pulseDamage:8,
-   rewardCoins:30,
+   rewardCoins:15,
    rewardXp:45
   },
   escort:{
    duration:24,
+   durationBase:6,
+   durationPer100px:4.5,
+   durationMin:10,
+   durationMax:40,
    machineRadius:36,
    orbRadius:11,
    orbFollowSpeed:210,
    targetApproachSpeed:170,
    tetherDistance:250,
-   rewardCoins:25,
+   rewardCoins:10,
    rewardEmpRadius:220,
    rewardEmpDamage:90
   }
@@ -110,7 +116,7 @@ const BALANCE={
   xpPickupLifetime:15,
   coinPickupLifetime:15,
   enemyXpMultiplier:1,
-  enemyCoinChance:0.2,
+  enemyCoinChance:0.02,
   enemyCoinValueMultiplier:1,
   enemyHpDropChance:0.03,
   goldrushCoinHitChance:0.25,
@@ -174,7 +180,7 @@ const BALANCE={
    spawnMinDist:220,
    spawnMaxDist:700,
    fuse:3,
-   radius:180,
+   radius:300,
    enemyDamage:95,
    playerDamage:18
   }

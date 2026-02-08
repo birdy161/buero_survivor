@@ -79,11 +79,13 @@ if(activeObjective&&activeObjective.type==='escort'){
  e.machineR=Math.max(8,num(e.machineR,BALANCE.objectives.escort.machineRadius));
  e.tether=Math.max(20,num(e.tether,BALANCE.objectives.escort.tetherDistance));
  e.startDist=Math.max(1,num(e.startDist,dst({x:e.orbX,y:e.orbY},{x:e.machineX,y:e.machineY})));
- e.timer=Math.max(0,num(e.timer,BALANCE.objectives.escort.duration));
+ const ec=BALANCE.objectives.escort,tBase=Number(ec.durationBase??ec.duration??6),tPer100=Number(ec.durationPer100px??4.5);
+ const tRaw=tBase+(e.startDist/100)*tPer100,tMin=Number(ec.durationMin??10),tMax=Number(ec.durationMax??40);
+ e.timer=Math.max(0,num(e.timer,clamp(tRaw,tMin,tMax)));
 }else if(activeObjective&&activeObjective.type==='hold'){
- const e=activeObjective;e.progress=Math.max(0,num(e.progress,0));e.x=num(e.x,P.x);e.y=num(e.y,P.y);e.r=Math.max(20,num(e.r,BALANCE.objectives.hold.radius));e.target=Math.max(1,num(e.target,BALANCE.objectives.hold.targetTime));e.decay=Math.max(0,num(e.decay,BALANCE.objectives.hold.decayPerSec));
+ const e=activeObjective;e.progress=Math.max(0,num(e.progress,0));e.x=num(e.x,P.x);e.y=num(e.y,P.y);e.r=Math.max(20,num(e.r,BALANCE.objectives.hold.radius));e.target=Math.max(1,num(e.target,BALANCE.objectives.hold.targetTime));e.decay=Math.max(0,num(e.decay,BALANCE.objectives.hold.decayPerSec));e.timer=Math.max(0,num(e.timer,BALANCE.objectives.hold.timeout));
 }else if(activeObjective&&activeObjective.type==='hazard'){
- const e=activeObjective;e.hp=Math.max(1,num(e.hp,BALANCE.objectives.hazard.hp));e.mhp=Math.max(1,num(e.mhp,BALANCE.objectives.hazard.hp));e.timer=Math.max(0,num(e.timer,BALANCE.objectives.hazard.duration));e.pulseT=Math.max(0,num(e.pulseT,0));e.pulseEvery=Math.max(.1,num(e.pulseEvery,BALANCE.objectives.hazard.pulseEvery));e.pulseR=Math.max(20,num(e.pulseR,BALANCE.objectives.hazard.pulseRadius));e.pulseDmg=Math.max(1,num(e.pulseDmg,BALANCE.objectives.hazard.pulseDamage));e.r=Math.max(8,num(e.r,BALANCE.objectives.hazard.radius));e.x=num(e.x,P.x);e.y=num(e.y,P.y);
+ const e=activeObjective,ht=BALANCE.objectives.hazard.timeout??BALANCE.objectives.hazard.duration;e.hp=Math.max(1,num(e.hp,BALANCE.objectives.hazard.hp));e.mhp=Math.max(1,num(e.mhp,BALANCE.objectives.hazard.hp));e.timer=Math.max(0,num(e.timer,ht));e.pulseT=Math.max(0,num(e.pulseT,0));e.pulseEvery=Math.max(.1,num(e.pulseEvery,BALANCE.objectives.hazard.pulseEvery));e.pulseR=Math.max(20,num(e.pulseR,BALANCE.objectives.hazard.pulseRadius));e.pulseDmg=Math.max(1,num(e.pulseDmg,BALANCE.objectives.hazard.pulseDamage));e.r=Math.max(8,num(e.r,BALANCE.objectives.hazard.radius));e.x=num(e.x,P.x);e.y=num(e.y,P.y);
 }
 cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 }catch(e){

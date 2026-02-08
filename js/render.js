@@ -109,6 +109,7 @@ gfx.forEach(g=>{const sx=g.x-cx,sy=g.y-cy,a=1-g.t/g.dur;
  X.globalAlpha=1});
 
 // Pickups
+X.globalAlpha=1;
 pickups.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,b=Math.sin(gameTime*5+p.x)*3;
  const py=sy+b;
  if(p.type==='xp')dE('🔹',sx,py,14);
@@ -122,6 +123,7 @@ pickups.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,b=Math.sin(gameTime*5+p.x)*3;
   dE(t?t.emoji:'✨',sx,py+1,15);
  }
 });
+X.globalAlpha=1;
 
 // Enemies
 enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
@@ -277,7 +279,7 @@ if(activeObjective){
  X.fillStyle='rgba(0,0,0,.42)';X.beginPath();X.roundRect(VW/2-140,56,280,34,9);X.fill();
  if(activeObjective.type==='hold'){
   const o=activeObjective,p=clamp(o.progress/o.target,0,1);
-  dT('🎯 Zone halten',VW/2,67,10,'#80DEEA','center',true);
+  dT('🎯 Zone halten ('+Math.ceil(o.timer||0)+'s)',VW/2,67,10,'#80DEEA','center',true);
   dBar(VW/2-110,76,220,8,p,'#00BCD4','rgba(255,255,255,.12)');
  }else if(activeObjective.type==='hazard'){
   const o=activeObjective;

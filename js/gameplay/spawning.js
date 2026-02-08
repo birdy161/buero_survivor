@@ -425,18 +425,23 @@ if(wave<oc.minWave)return;
 const roll=Math.random();
 if(roll<.34){
  const hc=oc.hold,p=pickArenaPos(170,480);
- activeObjective={type:'hold',x:p.x,y:p.y,r:hc.radius,progress:0,target:hc.targetTime,decay:hc.decayPerSec};
+ activeObjective={type:'hold',x:p.x,y:p.y,r:hc.radius,progress:0,target:hc.targetTime,decay:hc.decayPerSec,timer:hc.timeout};
  fTxt(p.x,p.y-24,'🛡️ Zone halten','#B2EBF2',16);
  return;
 }
 if(roll<.67){
  const hc=oc.hazard,p=pickArenaPos(250,760);
- activeObjective={type:'hazard',x:p.x,y:p.y,r:hc.radius,hp:hc.hp,mhp:hc.hp,timer:hc.duration,pulseT:0,pulseEvery:hc.pulseEvery,pulseR:hc.pulseRadius,pulseDmg:hc.pulseDamage};
+ activeObjective={type:'hazard',x:p.x,y:p.y,r:hc.radius,hp:hc.hp,mhp:hc.hp,timer:hc.timeout??hc.duration,pulseT:0,pulseEvery:hc.pulseEvery,pulseR:hc.pulseRadius,pulseDmg:hc.pulseDamage};
  fTxt(p.x,p.y-26,'💻 Spam Bot Terminal zerstören','#FF8A80',16);
  return;
 }
 const ec=oc.escort,p=pickArenaPos(260,700),ox=clamp(P.x+rng(-35,35),30,worldW-30),oy=clamp(P.y+rng(-35,35),30,worldH-30);
-activeObjective={type:'escort',orbX:ox,orbY:oy,orbR:ec.orbRadius,machineX:p.x,machineY:p.y,machineR:ec.machineRadius,tether:ec.tetherDistance,startDist:Math.max(1,dst({x:ox,y:oy},{x:p.x,y:p.y})),timer:ec.duration};
+const sDist=Math.max(1,dst({x:ox,y:oy},{x:p.x,y:p.y}));
+const tBase=Number(ec.durationBase??ec.duration??6),tPer100=Number(ec.durationPer100px??4.5);
+const tRaw=tBase+(sDist/100)*tPer100;
+const tMin=Number(ec.durationMin??10),tMax=Number(ec.durationMax??40);
+const t=clamp(tRaw,tMin,tMax);
+activeObjective={type:'escort',orbX:ox,orbY:oy,orbR:ec.orbRadius,machineX:p.x,machineY:p.y,machineR:ec.machineRadius,tether:ec.tetherDistance,startDist:sDist,timer:t};
 fTxt(p.x,p.y-26,'✉️ Post zustellen','#FFE082',16);
 }
 
@@ -473,6 +478,8 @@ if(activeObjective.type==='hazard'){
  fTxt(P.x,P.y-36,'❌ Spam-Terminal aktiv! Feinde schneller','#FF8A80',15);
 }else if(activeObjective.type==='escort'){
  fTxt(P.x,P.y-36,'❌ Post verspätet','#FFAB91',15);
+}else if(activeObjective.type==='hold'){
+ fTxt(P.x,P.y-36,'❌ Zone nicht gehalten','#FFAB91',15);
 }
 activeObjective=null;objectiveSpawnT=0;
 }
@@ -488,9 +495,11 @@ if(!activeObjective){
 }
 const o=activeObjective;
 if(o.type==='hold'){
+ o.timer=Math.max(0,(o.timer||0)-dt);
  const inside=dst(P,o)<o.r+P.sz;
  o.progress=inside?Math.min(o.target,o.progress+dt):Math.max(0,o.progress-o.decay*dt);
  if(o.progress>=o.target)completeObjective();
+ else if(o.timer<=0)failObjective();
  return;
 }
 if(o.type==='hazard'){
