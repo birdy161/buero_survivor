@@ -79,7 +79,7 @@ if(activeObjective&&activeObjective.type==='escort'){
  e.machineR=Math.max(8,num(e.machineR,BALANCE.objectives.escort.machineRadius));
  e.tether=Math.max(20,num(e.tether,BALANCE.objectives.escort.tetherDistance));
  e.startDist=Math.max(1,num(e.startDist,dst({x:e.orbX,y:e.orbY},{x:e.machineX,y:e.machineY})));
- const ec=BALANCE.objectives.escort,tBase=Number(ec.durationBase??ec.duration??6),tPer100=Number(ec.durationPer100px??4.5);
+ const ec=BALANCE.objectives.escort,tBase=Number(ec.durationBase??6),tPer100=Number(ec.durationPer100px??4.5);
  const tRaw=tBase+(e.startDist/100)*tPer100,tMin=Number(ec.durationMin??10),tMax=Number(ec.durationMax??40);
  e.timer=Math.max(0,num(e.timer,clamp(tRaw,tMin,tMax)));
 }else if(activeObjective&&activeObjective.type==='hold'){

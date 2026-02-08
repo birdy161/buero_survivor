@@ -97,9 +97,8 @@ const BALANCE={
    rewardXp:45
   },
   escort:{
-   duration:24,
    durationBase:6,
-   durationPer100px:4.5,
+   durationPer100px:1.1,
    durationMin:10,
    durationMax:40,
    machineRadius:36,

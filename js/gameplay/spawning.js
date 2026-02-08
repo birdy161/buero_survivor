@@ -437,7 +437,7 @@ if(roll<.67){
 }
 const ec=oc.escort,p=pickArenaPos(260,700),ox=clamp(P.x+rng(-35,35),30,worldW-30),oy=clamp(P.y+rng(-35,35),30,worldH-30);
 const sDist=Math.max(1,dst({x:ox,y:oy},{x:p.x,y:p.y}));
-const tBase=Number(ec.durationBase??ec.duration??6),tPer100=Number(ec.durationPer100px??4.5);
+const tBase=Number(ec.durationBase??6),tPer100=Number(ec.durationPer100px??4.5);
 const tRaw=tBase+(sDist/100)*tPer100;
 const tMin=Number(ec.durationMin??10),tMax=Number(ec.durationMax??40);
 const t=clamp(tRaw,tMin,tMax);
