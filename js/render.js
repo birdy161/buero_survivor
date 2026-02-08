@@ -177,25 +177,25 @@ if(activeObjective){
  if(o.type==='hazard'){
   const sx=o.x-cx,sy=o.y-cy;
   const pulse=.35+.2*Math.sin(gameTime*8);
-  X.globalAlpha=.25;X.fillStyle='#FF5252';X.beginPath();X.arc(sx,sy,o.r+22,0,PI2);X.fill();X.globalAlpha=1;
-  X.strokeStyle='rgba(255,82,82,.85)';X.lineWidth=3;X.beginPath();X.arc(sx,sy,o.r+12,0,PI2);X.stroke();
-  X.strokeStyle='rgba(255,255,255,.45)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.pulseR*pulse,0,PI2);X.stroke();
-  X.strokeStyle='rgba(255,120,120,.8)';X.lineWidth=4;X.beginPath();X.moveTo(sx,sy-90);X.lineTo(sx,sy+90);X.stroke();
-  dE('☢️',sx,sy,28);
-  dT('HAZARD SOURCE',sx,sy-44,9,'#FFCDD2','center',true);
-  dBar(sx-45,sy-29,90,6,o.hp/o.mhp,'#FF5252','rgba(0,0,0,.5)');
+  X.globalAlpha=.25;X.fillStyle='#3F51B5';X.beginPath();X.arc(sx,sy,o.r+22,0,PI2);X.fill();X.globalAlpha=1;
+  X.strokeStyle='rgba(92,107,192,.9)';X.lineWidth=3;X.beginPath();X.arc(sx,sy,o.r+12,0,PI2);X.stroke();
+  X.strokeStyle='rgba(179,229,252,.5)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.pulseR*pulse,0,PI2);X.stroke();
+  X.strokeStyle='rgba(129,212,250,.8)';X.lineWidth=4;X.beginPath();X.moveTo(sx,sy-90);X.lineTo(sx,sy+90);X.stroke();
+  dE('💻',sx,sy,28);
+  dT('SPAM BOT TERMINAL',sx,sy-44,9,'#C5CAE9','center',true);
+  dBar(sx-45,sy-29,90,6,o.hp/o.mhp,'#5C6BC0','rgba(0,0,0,.5)');
   const m=26,off=sx<m||sx>VW-m||sy<m||sy>VH-m;
   if(off){
    const vx=sx-VW/2,vy=sy-VH/2;
    const sc=Math.min((VW*.5-m)/Math.max(1,Math.abs(vx)),(VH*.5-m)/Math.max(1,Math.abs(vy)));
    const px=VW/2+vx*sc,py=VH/2+vy*sc,aa=Math.atan2(vy,vx);
-   X.fillStyle='rgba(255,82,82,.88)';X.beginPath();
+   X.fillStyle='rgba(92,107,192,.9)';X.beginPath();
    X.moveTo(px+Math.cos(aa)*12,py+Math.sin(aa)*12);
    X.lineTo(px+Math.cos(aa+2.5)*9,py+Math.sin(aa+2.5)*9);
    X.lineTo(px+Math.cos(aa-2.5)*9,py+Math.sin(aa-2.5)*9);X.closePath();X.fill();
-   dT('SOURCE',px,py-14,8,'#FFCDD2','center',true);
- }
-}else if(o.type==='escort'){
+   dT('SPAM BOT',px,py-14,8,'#C5CAE9','center',true);
+  }
+ }else if(o.type==='escort'){
  dE('✉️',o.orbX-cx,o.orbY-cy,18);
  dE('📮',o.machineX-cx,o.machineY-cy,20);
 }
@@ -263,15 +263,15 @@ if(activeObjective){
   dBar(VW/2-110,76,220,8,p,'#00BCD4','rgba(255,255,255,.12)');
  }else if(activeObjective.type==='hazard'){
   const o=activeObjective;
-  dT('☢️ Hazard Source zerstören ('+Math.ceil(o.timer)+'s)',VW/2,67,10,'#FFCDD2','center',true);
-  dBar(VW/2-110,76,220,8,o.hp/o.mhp,'#FF5252','rgba(255,255,255,.12)');
+  dT('💻 Spam Bot Terminal zerstören ('+Math.ceil(o.timer)+'s)',VW/2,67,10,'#C5CAE9','center',true);
+  dBar(VW/2-110,76,220,8,o.hp/o.mhp,'#5C6BC0','rgba(255,255,255,.12)');
 }else if(activeObjective.type==='escort'){
  const o=activeObjective,dist=dst({x:o.orbX,y:o.orbY},{x:o.machineX,y:o.machineY}),p=clamp(1-dist/o.startDist,0,1);
  dT('✉️ Post zur Mailbox bringen ('+Math.ceil(o.timer||0)+'s)',VW/2,67,10,'#FFE082','center',true);
  dBar(VW/2-110,76,220,8,p,'#FFD54F','rgba(255,255,255,.12)');
 }
 }
-if(objectivePenaltyT>0)dT('⚠️ Quelle aktiv: Feinde schneller ('+Math.ceil(objectivePenaltyT)+'s)',VW/2,96,9,'#FF8A80','center',true);
+if(objectivePenaltyT>0)dT('⚠️ Spam-Terminal aktiv: Feinde schneller ('+Math.ceil(objectivePenaltyT)+'s)',VW/2,96,9,'#FF8A80','center',true);
 if(objectiveRewardT>0){
  const a=clamp(objectiveRewardT/2.6,0,1);
  X.globalAlpha=.35+.5*a;X.fillStyle='rgba(20,30,10,.8)';X.beginPath();X.roundRect(VW/2-175,104,350,24,8);X.fill();X.globalAlpha=1;

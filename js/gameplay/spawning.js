@@ -362,7 +362,7 @@ if(roll<.34){
 if(roll<.67){
  const hc=oc.hazard,p=pickArenaPos(250,760);
  activeObjective={type:'hazard',x:p.x,y:p.y,r:hc.radius,hp:hc.hp,mhp:hc.hp,timer:hc.duration,pulseT:0,pulseEvery:hc.pulseEvery,pulseR:hc.pulseRadius,pulseDmg:hc.pulseDamage};
- fTxt(p.x,p.y-26,'☢️ Quelle zerstören','#FF8A80',16);
+ fTxt(p.x,p.y-26,'💻 Spam Bot Terminal zerstören','#FF8A80',16);
  return;
 }
 const ec=oc.escort,p=pickArenaPos(260,700),ox=clamp(P.x+rng(-35,35),30,worldW-30),oy=clamp(P.y+rng(-35,35),30,worldH-30);
@@ -383,7 +383,7 @@ if(o.type==='hold'){
  coins+=oc.hazard.rewardCoins;triggerCoinHudPulse();addXP(oc.hazard.rewardXp);
  objectiveRewardText=`Belohnung: +${oc.hazard.rewardCoins} Münzen, +${oc.hazard.rewardXp} XP`;
  objectiveRewardT=2.6;
- burst(o.x,o.y,18,'#80DEEA',170,6,.55);fTxt(o.x,o.y-26,'✅ Quelle zerstört','#80DEEA',16);sfx('lvl');
+ burst(o.x,o.y,18,'#80DEEA',170,6,.55);fTxt(o.x,o.y-26,'✅ Spam Bot deaktiviert','#80DEEA',16);sfx('lvl');
 }else if(o.type==='escort'){
  const ec=oc.escort;
  coins+=ec.rewardCoins;triggerCoinHudPulse();
@@ -400,7 +400,7 @@ function failObjective(){
 if(!activeObjective)return;
 if(activeObjective.type==='hazard'){
  objectivePenaltyT=Math.max(objectivePenaltyT,BALANCE.objectives.penaltyDuration);
- fTxt(P.x,P.y-36,'❌ Quelle aktiv! Feinde schneller','#FF8A80',15);
+ fTxt(P.x,P.y-36,'❌ Spam-Terminal aktiv! Feinde schneller','#FF8A80',15);
 }else if(activeObjective.type==='escort'){
  fTxt(P.x,P.y-36,'❌ Post verspätet','#FFAB91',15);
 }
