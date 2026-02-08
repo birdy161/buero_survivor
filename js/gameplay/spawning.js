@@ -19,9 +19,10 @@ else if(opts.role==='fast'){
  const wi=[0,1,5,6,9].filter(i=>i<ET.length),mx=Math.min(2+Math.floor(wave*0.7),ET.length);
  et=opts.role==='weak'?ET[wi[rngI(0,wi.length-1)]||0]:ET[rngI(0,mx-1)];
 }
-const sc=1+wave*.18; // HP scales 18% per wave (was 12%)
-const spdSc=1+wave*.04; // Speed also scales!
-const dmgSc=1+wave*.1; // DMG scales 10% per wave
+const eg=Math.max(0,Number(directorScaling().enemyStatGrowth||1));
+const sc=1+wave*.18*eg; // HP scales with configurable growth factor
+const spdSc=1+wave*.04*eg;
+const dmgSc=1+wave*.1*eg;
 // ELITE chance: 15% from wave 3, 30% from wave 7
 const isElite=opts.elite===true||(opts.elite!==false&&wave>=3&&Math.random()<(wave>=7?.3:.15));
 const em=isElite?2.5:1, esm=isElite?1.3:1, edm=isElite?1.5:1;
@@ -39,9 +40,11 @@ chargeT:0,chargeCD:0,rushT:Math.max(0,Number(opts.rushT)||0),rushVX:Number(opts.
 
 function spawnBoss(){
 if(bossRef||!P)return;const bi=clamp(Math.floor((wave-5)/5),0,BT.length-1);
-const bt={...BT[bi]},sc=1+wave*.22;
-bt.hp=Math.floor(bt.hp*sc);bt.mhp=bt.hp;bt.dmg=Math.floor(bt.dmg*(1+wave*.1));
-bt.xp=Math.floor(bt.xp*(1+wave*.08));
+const bg=Math.max(0,Number(directorScaling().bossStatGrowth||1));
+const bt={...BT[bi]},sc=1+wave*.22*bg;
+bt.hp=Math.floor(bt.hp*sc);bt.mhp=bt.hp;
+bt.dmg=Math.floor(bt.dmg*(1+wave*.1*bg));
+bt.xp=Math.floor(bt.xp*(1+wave*.08*bg));
 const a=rng(0,PI2);bt.x=P.x+Math.cos(a)*350;bt.y=P.y+Math.sin(a)*350;
 bt.flash=0;bt.slowT=0;bt.freezeT=0;bt.pinT=0;bt.atkT=0;bt.isBoss=true;
 bt.elite=false;bt.infected=false;bt.chargeT=0;bt.chargeCD=0;bt.uid=Math.random();
@@ -55,29 +58,43 @@ const t=clamp((wv-1)/9,0,1);
 return lerp(v1,v10,t);
 }
 
+function directorScaling(){
+return BALANCE.director.scaling||{};
+}
+
+function scaledWave(wv){
+return Math.max(1,wv+Number(directorScaling().roleTierShift||0));
+}
+
 function directorEventCount(wv){
-if(wv<=2)return 1;
-if(wv<=6)return 2;
-if(wv<=10)return 3;
-return 4;
+const sw=scaledWave(wv),f=Math.max(.1,Number(directorScaling().eventFrequency||1));
+let base=4;
+if(sw<=2)base=1;
+else if(sw<=6)base=2;
+else if(sw<=10)base=3;
+return Math.max(1,Math.round(base*f));
 }
 
 function directorAmbientInterval(wv){
-return Math.max(.05,waveLerp(BALANCE.director.ambient.intervalWave1,BALANCE.director.ambient.intervalWave10,wv));
+const rt=Math.max(.1,Number(directorScaling().ambientRate||1));
+return Math.max(.05,waveLerp(BALANCE.director.ambient.intervalWave1,BALANCE.director.ambient.intervalWave10,wv)/rt);
 }
 
 function directorWaveBudget(wv){
 const b=BALANCE.director.budget;
-if(wv<=1)return Math.floor(b.wave1);
-if(wv>=10)return Math.floor(b.wave10*Math.pow(1.12,wv-10));
+const mul=Math.max(.05,Number(directorScaling().budgetMultiplier||1));
+const g=Math.max(1,Number(directorScaling().budgetPost10Growth||1.12));
+if(wv<=1)return Math.floor(b.wave1*mul);
+if(wv>=10)return Math.floor(b.wave10*Math.pow(g,wv-10)*mul);
 const k=(wv-1)/9;
-return Math.floor(b.wave1*Math.pow(b.wave10/b.wave1,k));
+return Math.floor(b.wave1*Math.pow(b.wave10/b.wave1,k)*mul);
 }
 
 function directorEnemyMix(wv){
 const m=BALANCE.director.mix;
-const weak=clamp(waveLerp(m.weakWave1,m.weakWave10,wv),0,1);
-const fast=clamp(waveLerp(m.fastWave1,m.fastWave10,wv),0,1-weak);
+const sw=scaledWave(wv);
+const weak=clamp(waveLerp(m.weakWave1,m.weakWave10,sw),0,1);
+const fast=clamp(waveLerp(m.fastWave1,m.fastWave10,sw),0,1-weak);
 const tank=clamp(1-weak-fast,0,1);
 return{weak,fast,tank};
 }
@@ -90,8 +107,9 @@ return'tank';
 }
 
 function directorEventRole(wv){
-if(wv<=3)return'weak';
-if(wv<=7)return'fast';
+const sw=scaledWave(wv);
+if(sw<=3)return'weak';
+if(sw<=7)return'fast';
 return'tank';
 }
 
@@ -123,22 +141,28 @@ return true;
 }
 
 function eventCircleCountByWave(wv){
-return Math.max(8,Math.min(56,10+Math.floor(wv*4)));
+const s=Math.max(.1,Number(directorScaling().eventSize||1));
+return Math.max(4,Math.min(70,Math.round((10+Math.floor(wv*4))*s)));
 }
 function eventCircleRadiusByWave(wv){
-return Math.max(140,320-wv*11);
+const rs=Math.max(.2,Number(directorScaling().eventRadius||1));
+return Math.max(110,Math.round((320-wv*11)*rs));
 }
 function eventStampedeCountByWave(wv){
-return Math.max(6,Math.min(42,8+Math.floor(wv*3)));
+const s=Math.max(.1,Number(directorScaling().eventSize||1));
+return Math.max(3,Math.min(56,Math.round((8+Math.floor(wv*3))*s)));
 }
 function eventStampedeSpeedByWave(wv){
-return Math.max(220,Math.min(520,220+wv*24));
+const ss=Math.max(.1,Number(directorScaling().eventSpeed||1));
+return Math.max(140,Math.min(700,Math.round((220+wv*24)*ss)));
 }
 function eventAmbushEliteByWave(wv){
-return Math.max(1,Math.min(6,1+Math.floor((wv+1)/3)));
+const s=Math.max(.1,Number(directorScaling().eventSize||1));
+return Math.max(1,Math.min(8,Math.round((1+Math.floor((wv+1)/3))*s)));
 }
 function eventAmbushMinionsByWave(wv){
-return Math.max(0,Math.min(14,Math.floor((wv-2)*1.2)));
+const s=Math.max(.1,Number(directorScaling().eventSize||1));
+return Math.max(0,Math.min(20,Math.round(Math.max(0,(wv-2)*1.2)*s)));
 }
 
 function buildDirectorEvents(wv){
@@ -175,13 +199,14 @@ const useRole=affordableEventRole(role);if(!useRole)return;
 const n=Math.max(1,Math.min(count,Math.floor(directorBudget/roleCost(useRole))));
 const speed=eventStampedeSpeedByWave(wv),rushDuration=BALANCE.director.events.stampede.rushDuration;
 const side=rngI(0,3);
+const laneT=i=>(i+.5)/n;
 for(let i=0;i<n;i++){
  if(!spendDirector(useRole))break;
  let x=P.x,y=P.y,vx=0,vy=0;
- if(side===0){x=clamp(P.x-VW*.7,20,worldW-20);y=clamp(P.y+rng(-VH*.45,VH*.45),20,worldH-20);vx=speed}
- else if(side===1){x=clamp(P.x+VW*.7,20,worldW-20);y=clamp(P.y+rng(-VH*.45,VH*.45),20,worldH-20);vx=-speed}
- else if(side===2){x=clamp(P.x+rng(-VW*.45,VW*.45),20,worldW-20);y=clamp(P.y-VH*.7,20,worldH-20);vy=speed}
- else{x=clamp(P.x+rng(-VW*.45,VW*.45),20,worldW-20);y=clamp(P.y+VH*.7,20,worldH-20);vy=-speed}
+ if(side===0){x=clamp(P.x-VW*.7,20,worldW-20);y=clamp(P.y-VH*.45+laneT(i)*(VH*.9),20,worldH-20);vx=speed}
+ else if(side===1){x=clamp(P.x+VW*.7,20,worldW-20);y=clamp(P.y-VH*.45+laneT(i)*(VH*.9),20,worldH-20);vx=-speed}
+ else if(side===2){x=clamp(P.x-VW*.45+laneT(i)*(VW*.9),20,worldW-20);y=clamp(P.y-VH*.7,20,worldH-20);vy=speed}
+ else{x=clamp(P.x-VW*.45+laneT(i)*(VW*.9),20,worldW-20);y=clamp(P.y+VH*.7,20,worldH-20);vy=-speed}
  spawnE({x,y,role:useRole,etIndex,elite:false,rushT:rushDuration,rushVX:vx,rushVY:vy});
 }
 fTxt(P.x,P.y-46,'🏃 STAMPEDE','#FF8A65',14);

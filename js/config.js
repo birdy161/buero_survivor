@@ -4,34 +4,29 @@ const BALANCE={
   spawnPopDuration:0.35,
   spawnPopMinScale:0.12,
   waveDuration:50,
+  scaling:{
+   ambientRate:1,
+   eventFrequency:1,
+   eventSize:1,
+   eventSpeed:1,
+   eventRadius:1,
+   budgetMultiplier:1,
+   budgetPost10Growth:1.12,
+   enemyStatGrowth:1,
+   bossStatGrowth:1,
+   roleTierShift:0
+  },
   ambient:{
    intervalWave1:2,
    intervalWave10:.3
   },
   events:{
-   wave1Count:1,
-   wave5Count:2,
-   wave10Count:4,
    types:['CIRCLE','STAMPEDE','AMBUSH'],
-   circle:{
-    radiusWave1:300,
-    radiusWave10:170,
-    countWave1:12,
-    countWave10:48
-   },
    stampede:{
-    countWave1:10,
-    countWave10:34,
-    speedWave1:260,
-    speedWave10:430,
     rushDuration:2.8
    },
    ambush:{
-    distance:250,
-    eliteWave1:1,
-    eliteWave10:4,
-    minionWave1:0,
-    minionWave10:8
+    distance:250
    }
   },
   budget:{
@@ -82,6 +77,7 @@ const BALANCE={
    rewardXp:45
   },
   escort:{
+   duration:24,
    machineRadius:36,
    orbRadius:11,
    orbFollowSpeed:210,
