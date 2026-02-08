@@ -192,8 +192,8 @@ activeObjective=null;objectiveSpawnT=0;
 function tickObjectives(dt){
 if(!P)return;
 if(objectivePenaltyT>0)objectivePenaltyT=Math.max(0,objectivePenaltyT-dt);
-if(waveT>0){activeObjective=null;objectiveSpawnT=0;return}
 if(!activeObjective){
+ if(waveT>0)return; // no new objectives during break
  objectiveSpawnT+=dt;
  if(objectiveSpawnT>=BALANCE.objectives.spawnInterval){objectiveSpawnT=0;spawnObjective()}
  return;
@@ -302,7 +302,7 @@ if(waveT<=0){
   const cnt=Math.min(batch,waveTarget-waveSpawned);
   for(let i=0;i<cnt;i++){spawnE();waveSpawned++}
  }
- if(waveSpawned>=waveTarget&&enemies.length===0&&!bossRef){
+ if(waveSpawned>=waveTarget&&!bossRef){
   waveTarget=0;waveT=BALANCE.waves.breakDuration;
   fTxt(P.x,P.y-40,'☕ Kurze Pause','#80CBC4',16);
  }
