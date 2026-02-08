@@ -7,12 +7,20 @@ const dmg=Math.floor(w.dm*P.bdmg*P.dmgM*(1+getDamageBonus())*cdmg);
 const shots=1+P.proj;
 let near=null,nd=450;
 for(const e of enemies){if(e.hp<=0)continue;const d=dst(P,e);if(d<nd){nd=d;near=e}}
+const hazardTarget=activeObjective&&activeObjective.type==='hazard'&&activeObjective.hp>0?activeObjective:null;
+if(hazardTarget){const d=dst(P,hazardTarget);if(d<nd){nd=d;near=hazardTarget}}
 
 w.shotCount=(w.shotCount||0)+1;
 
 // === CHAIN LIGHTNING (Kabelsalat) ===
 if(w.mech==='chain'){
  if(!near)return;sfx('shoot');
+ if(near===hazardTarget){
+  hazardTarget.hp=Math.max(0,hazardTarget.hp-dmg);
+  for(let j=0;j<8;j++){const t2=j/8;addP(lerp(P.x,hazardTarget.x,t2)+rng(-8,8),lerp(P.y,hazardTarget.y,t2)+rng(-8,8),0,0,.12,w.col,3)}
+  fTxt(hazardTarget.x,hazardTarget.y-20,'⚡'+dmg,'#80DEEA',13);
+  return;
+ }
  let tgt=near,ch=[tgt],cpr={mech:'chain',dmg,own:'p'};hurtE(tgt,dmg);trySynergy(cpr,tgt);
  for(let c=0;c<4;c++){let nt=null,nd2=160;
   for(const e of enemies){if(ch.includes(e)||e.hp<=0)continue;const d2=dst(tgt,e);if(d2<nd2){nd2=d2;nt=e}}
@@ -27,6 +35,14 @@ if(w.mech==='chain'){
 if(w.mech==='cone'){
  if(!near)return;sfx('shoot');
  const fa=ang(P,near);
+ if(hazardTarget){
+  const d2=dst(P,hazardTarget),ea=ang(P,hazardTarget);
+  let ad=Math.abs(ea-fa);if(ad>PI)ad=PI2-ad;
+  if(d2<170&&ad<.5){
+   hazardTarget.hp=Math.max(0,hazardTarget.hp-dmg);
+   burst(hazardTarget.x,hazardTarget.y,4,w.col,60,3,.2);
+  }
+ }
  for(const e of enemies){if(e.hp<=0)continue;const d2=dst(P,e),ea=ang(P,e);
   let ad=Math.abs(ea-fa);if(ad>PI)ad=PI2-ad;
   if(d2<160&&ad<.5){hurtE(e,dmg);e.slowT=Math.max(e.slowT,1.5);
@@ -104,7 +120,7 @@ switch(pr.mech){
  case'infect':{ // Spritze: infect enemy
   e.infected=true;break;}
  case'goldrush':{ // Megafon: Bonus-Münze bei Treffer
-  if(Math.random()<.25){pickups.push({x:e.x+rng(-8,8),y:e.y+rng(-8,8),type:'coin',val:1,life:12});sfx('coin')}
+  if(Math.random()<BALANCE.drops.goldrushCoinHitChance){pickups.push({x:e.x+rng(-8,8),y:e.y+rng(-8,8),type:'coin',val:1,life:12});sfx('coin')}
   break;}
  case'pin':{ // Tacker: pin in place
   e.pinT=Math.max(e.pinT,.5);break;}
@@ -154,10 +170,10 @@ if((e.freezeT||0)>0&&pr.own==='p'&&pr.dmg>=P.bdmg*1.2){
 function killE(e){
 if(!P)return;e.hp=0;kills++;addCombo();
 const cxp=comboXp(); // combo passive XP bonus
-pickups.push({x:e.x,y:e.y,type:'xp',val:Math.floor(e.xp*P.xpM*cxp),life:15});
-if(Math.random()<.3)pickups.push({x:e.x+rng(-10,10),y:e.y+rng(-10,10),type:'coin',val:e.co||1,life:15});
-if(Math.random()<.03)pickups.push({x:e.x,y:e.y,type:'hp',val:Math.floor(P.mhp*.1),life:15});
-if(hasTemp('expense'))for(let i=0;i<2;i++)pickups.push({x:e.x+rng(-14,14),y:e.y+rng(-14,14),type:'coin',val:1,life:10});
+pickups.push({x:e.x,y:e.y,type:'xp',val:Math.max(1,Math.floor(e.xp*P.xpM*cxp*BALANCE.drops.enemyXpMultiplier)),life:15});
+if(Math.random()<BALANCE.drops.enemyCoinChance)pickups.push({x:e.x+rng(-10,10),y:e.y+rng(-10,10),type:'coin',val:Math.max(1,Math.floor((e.co||1)*BALANCE.drops.enemyCoinValueMultiplier)),life:15});
+if(Math.random()<BALANCE.drops.enemyHpDropChance)pickups.push({x:e.x,y:e.y,type:'hp',val:Math.floor(P.mhp*.1),life:15});
+if(hasTemp('expense'))for(let i=0;i<BALANCE.drops.expenseBonusCoinDrops;i++)pickups.push({x:e.x+rng(-14,14),y:e.y+rng(-14,14),type:'coin',val:1,life:10});
 spawnTempPickup(e.x,e.y,e.isBoss?.35:.04);
 burst(e.x,e.y,e.elite?15:8,e.elite?'#FFD700':'#aaa',100,5,.4);sfx('kill');
 
@@ -169,7 +185,7 @@ if(e.infected){
 }
 
 if(e.isBoss){bossRef=null;burst(e.x,e.y,30,'#FFD700',180,8,.7);sfx('boom');cam.shake=18;triggerSlowMo(.08,.28,.4);
- for(let i=0;i<10;i++)pickups.push({x:e.x+rng(-50,50),y:e.y+rng(-50,50),type:'coin',val:Math.floor(e.co/10),life:15});
+ for(let i=0;i<BALANCE.drops.bossCoinBurstCount;i++)pickups.push({x:e.x+rng(-50,50),y:e.y+rng(-50,50),type:'coin',val:Math.max(1,Math.floor(e.co/BALANCE.drops.bossCoinValueDivisor)),life:15});
  spawnTempPickup(e.x,e.y,.9)}
 // Clean hitTracker
 delete hitTracker[''+e.uid];

@@ -138,6 +138,100 @@ for(let i=arenaTools.length-1;i>=0;i--){
 }
 }
 
+function spawnObjective(){
+if(!P||activeObjective||waveT>0||bossRef)return;
+const oc=BALANCE.objectives;
+if(wave<oc.minWave)return;
+const roll=Math.random();
+if(roll<.34){
+ const hc=oc.hold,p=pickArenaPos(170,480);
+ activeObjective={type:'hold',x:p.x,y:p.y,r:hc.radius,progress:0,target:hc.targetTime,decay:hc.decayPerSec};
+ fTxt(p.x,p.y-24,'🛡️ Zone halten','#B2EBF2',16);
+ return;
+}
+if(roll<.67){
+ const hc=oc.hazard,p=pickArenaPos(250,760);
+ activeObjective={type:'hazard',x:p.x,y:p.y,r:hc.radius,hp:hc.hp,mhp:hc.hp,timer:hc.duration,pulseT:0,pulseEvery:hc.pulseEvery,pulseR:hc.pulseRadius,pulseDmg:hc.pulseDamage};
+ fTxt(p.x,p.y-26,'☢️ Quelle zerstören','#FF8A80',16);
+ return;
+}
+const ec=oc.escort,p=pickArenaPos(260,700),ox=clamp(P.x+rng(-35,35),30,worldW-30),oy=clamp(P.y+rng(-35,35),30,worldH-30);
+activeObjective={type:'escort',orbX:ox,orbY:oy,orbR:ec.orbRadius,machineX:p.x,machineY:p.y,machineR:ec.machineRadius,tether:ec.tetherDistance,startDist:Math.max(1,dst({x:ox,y:oy},{x:p.x,y:p.y}))};
+fTxt(p.x,p.y-26,'⚡ Energie eskortieren','#FFE082',16);
+}
+
+function completeObjective(){
+if(!P||!activeObjective)return;
+const o=activeObjective,oc=BALANCE.objectives;
+if(o.type==='hold'){
+ coins+=oc.hold.rewardCoins;triggerCoinHudPulse();
+ P.shieldT=Math.max(P.shieldT,oc.hold.rewardShield);
+ fTxt(P.x,P.y-34,'✅ Zone gesichert','#80CBC4',16);sfx('coin');
+}else if(o.type==='hazard'){
+ coins+=oc.hazard.rewardCoins;triggerCoinHudPulse();addXP(oc.hazard.rewardXp);
+ burst(o.x,o.y,18,'#80DEEA',170,6,.55);fTxt(o.x,o.y-26,'✅ Quelle zerstört','#80DEEA',16);sfx('lvl');
+}else if(o.type==='escort'){
+ const ec=oc.escort;
+ coins+=ec.rewardCoins;triggerCoinHudPulse();
+ burst(o.machineX,o.machineY,22,'#FFD54F',200,6,.55);
+ for(const e of enemies){if(e.hp>0&&dst({x:o.machineX,y:o.machineY},e)<ec.rewardEmpRadius)hurtE(e,ec.rewardEmpDamage,true)}
+ fTxt(o.machineX,o.machineY-24,'✅ Maschine online','#FFD54F',16);sfx('power');
+}
+activeObjective=null;objectiveSpawnT=0;
+}
+
+function failObjective(){
+if(!activeObjective)return;
+if(activeObjective.type==='hazard'){
+ objectivePenaltyT=Math.max(objectivePenaltyT,BALANCE.objectives.penaltyDuration);
+ fTxt(P.x,P.y-36,'❌ Quelle aktiv! Feinde schneller','#FF8A80',15);
+}
+activeObjective=null;objectiveSpawnT=0;
+}
+
+function tickObjectives(dt){
+if(!P)return;
+if(objectivePenaltyT>0)objectivePenaltyT=Math.max(0,objectivePenaltyT-dt);
+if(waveT>0){activeObjective=null;objectiveSpawnT=0;return}
+if(!activeObjective){
+ objectiveSpawnT+=dt;
+ if(objectiveSpawnT>=BALANCE.objectives.spawnInterval){objectiveSpawnT=0;spawnObjective()}
+ return;
+}
+const o=activeObjective;
+if(o.type==='hold'){
+ const inside=dst(P,o)<o.r+P.sz;
+ o.progress=inside?Math.min(o.target,o.progress+dt):Math.max(0,o.progress-o.decay*dt);
+ if(o.progress>=o.target)completeObjective();
+ return;
+}
+if(o.type==='hazard'){
+ o.timer=Math.max(0,o.timer-dt);o.pulseT+=dt;
+ if(o.pulseT>=o.pulseEvery){
+  o.pulseT=0;
+  burst(o.x,o.y,10,'#FF5252',o.pulseR,4,.3);sfx('hurt');
+  if(dst(P,o)<=o.pulseR)pHurt(o.pulseDmg);
+ }
+ if(o.hp<=0)completeObjective();
+ else if(o.timer<=0)failObjective();
+ return;
+}
+if(o.type==='escort'){
+ const ec=BALANCE.objectives.escort,orb={x:o.orbX,y:o.orbY};
+ if(dst(orb,P)<=o.tether){
+  const a=ang(orb,P);
+  o.orbX+=Math.cos(a)*ec.orbFollowSpeed*dt;
+  o.orbY+=Math.sin(a)*ec.orbFollowSpeed*dt;
+ }else{
+  const ma=ang(orb,{x:o.machineX,y:o.machineY});
+  o.orbX+=Math.cos(ma)*ec.targetApproachSpeed*.35*dt;
+  o.orbY+=Math.sin(ma)*ec.targetApproachSpeed*.35*dt;
+ }
+ o.orbX=clamp(o.orbX,20,worldW-20);o.orbY=clamp(o.orbY,20,worldH-20);
+ if(dst({x:o.orbX,y:o.orbY},{x:o.machineX,y:o.machineY})<=o.machineR)completeObjective();
+}
+}
+
 function tickParticles(dt){
 for(let i=parts.length-1;i>=0;i--){const p=parts[i];
  if(p.type==='t'&&p.txtFx==='dmg'){
@@ -213,6 +307,7 @@ if(waveT<=0){
   fTxt(P.x,P.y-40,'☕ Kurze Pause','#80CBC4',16);
  }
 }
+tickObjectives(dt);
 tickArenaEvents(dt);
 
 // Fire weapons
@@ -230,6 +325,14 @@ for(let i=projs.length-1;i>=0;i--){
   if(dst(p,P)<25){projs.splice(i,1);continue}}}
  p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
  if(p.life<=0){projs.splice(i,1);continue}
+ if(activeObjective&&activeObjective.type==='hazard'&&p.own==='p'){
+  const o=activeObjective;
+  if(dst(p,o)<o.r+p.sz){
+   o.hp=Math.max(0,o.hp-Math.max(1,Math.floor(p.dmg)));
+   burst(p.x,p.y,3,'#80DEEA',45,3,.18);
+   if(p.mech!=='boomkb'){projs.splice(i,1);continue}
+  }
+ }
  let hitTool=false;
  for(const t of arenaTools){
   if(t.type!=='barrel'||t.exploded)continue;
@@ -275,6 +378,7 @@ for(let i=enemies.length-1;i>=0;i--){
 
  // Movement (with freeze/pin/slow)
  let ms=e.spd;
+ if(objectivePenaltyT>0)ms*=BALANCE.objectives.penaltyEnemySpeedMult;
  if(e.freezeT>0){ms=0;e.freezeT-=dt;} // Frozen = can't move
  else if(e.pinT>0){ms=0;e.pinT-=dt;} // Pinned = can't move
  else if(e.slowT>0){ms*=.3;e.slowT-=dt;} // Slowed

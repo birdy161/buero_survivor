@@ -70,6 +70,23 @@ arenaTools.forEach(t=>{
  }
 });
 
+// Micro-objectives (ground telegraph)
+if(activeObjective){
+ const o=activeObjective;
+ if(o.type==='hold'){
+  const sx=o.x-cx,sy=o.y-cy,p=clamp(o.progress/o.target,0,1);
+  X.fillStyle='rgba(0,188,212,.08)';X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.fill();
+  X.strokeStyle='rgba(0,188,212,.45)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.stroke();
+  X.strokeStyle='#00E5FF';X.lineWidth=4;X.beginPath();X.arc(sx,sy,o.r+5,-PI/2,-PI/2+p*PI2);X.stroke();
+  dT('HOLD',sx,sy,12,'#80DEEA','center',true);
+ }else if(o.type==='escort'){
+  const msx=o.machineX-cx,msy=o.machineY-cy,osx=o.orbX-cx,osy=o.orbY-cy;
+  X.fillStyle='rgba(255,213,79,.08)';X.beginPath();X.arc(msx,msy,o.machineR+12,0,PI2);X.fill();
+  X.strokeStyle='rgba(255,213,79,.55)';X.lineWidth=2.2;X.beginPath();X.arc(msx,msy,o.machineR+12,0,PI2);X.stroke();
+  X.strokeStyle='rgba(255,235,130,.45)';X.lineWidth=1.5;X.beginPath();X.moveTo(osx,osy);X.lineTo(msx,msy);X.stroke();
+ }
+}
+
 // World border (visible when reaching map limits)
 const wx=-cx,wy=-cy;
 X.strokeStyle='rgba(255,215,64,.55)';X.lineWidth=4;
@@ -153,6 +170,36 @@ projs.forEach(p=>{const sx=p.x-cx,sy=p.y-cy;
   X.beginPath();X.moveTo(sx,sy);X.lineTo(sx-p.vx*.015,sy-p.vy*.015);X.stroke()
  }});
 
+// Micro-objectives (foreground + crowded-scene clarity)
+if(activeObjective){
+ const o=activeObjective;
+ if(o.type==='hazard'){
+  const sx=o.x-cx,sy=o.y-cy;
+  const pulse=.35+.2*Math.sin(gameTime*8);
+  X.globalAlpha=.25;X.fillStyle='#FF5252';X.beginPath();X.arc(sx,sy,o.r+22,0,PI2);X.fill();X.globalAlpha=1;
+  X.strokeStyle='rgba(255,82,82,.85)';X.lineWidth=3;X.beginPath();X.arc(sx,sy,o.r+12,0,PI2);X.stroke();
+  X.strokeStyle='rgba(255,255,255,.45)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.pulseR*pulse,0,PI2);X.stroke();
+  X.strokeStyle='rgba(255,120,120,.8)';X.lineWidth=4;X.beginPath();X.moveTo(sx,sy-90);X.lineTo(sx,sy+90);X.stroke();
+  dE('☢️',sx,sy,28);
+  dT('HAZARD SOURCE',sx,sy-44,9,'#FFCDD2','center',true);
+  dBar(sx-45,sy-29,90,6,o.hp/o.mhp,'#FF5252','rgba(0,0,0,.5)');
+  const m=26,off=sx<m||sx>VW-m||sy<m||sy>VH-m;
+  if(off){
+   const vx=sx-VW/2,vy=sy-VH/2;
+   const sc=Math.min((VW*.5-m)/Math.max(1,Math.abs(vx)),(VH*.5-m)/Math.max(1,Math.abs(vy)));
+   const px=VW/2+vx*sc,py=VH/2+vy*sc,aa=Math.atan2(vy,vx);
+   X.fillStyle='rgba(255,82,82,.88)';X.beginPath();
+   X.moveTo(px+Math.cos(aa)*12,py+Math.sin(aa)*12);
+   X.lineTo(px+Math.cos(aa+2.5)*9,py+Math.sin(aa+2.5)*9);
+   X.lineTo(px+Math.cos(aa-2.5)*9,py+Math.sin(aa-2.5)*9);X.closePath();X.fill();
+   dT('SOURCE',px,py-14,8,'#FFCDD2','center',true);
+  }
+ }else if(o.type==='escort'){
+  dE('⚡',o.orbX-cx,o.orbY-cy,18);
+  dE('🏭',o.machineX-cx,o.machineY-cy,20);
+ }
+}
+
 // Particles
 parts.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,a=clamp(p.life/p.ml,0,1);
  X.globalAlpha=a;
@@ -207,6 +254,23 @@ if(waveT>0){
  dT('☕ Pause: '+Math.ceil(waveT)+'s',VW/2,38,10,'#80CBC4','center',true);
  dT('Nächste Welle: '+(wave+1),VW/2,50,8,'rgba(255,200,100,.55)','center',true);
 }else dT('🌊 '+wn,VW/2,38,9,'rgba(255,200,100,.6)','center',true);
+if(activeObjective){
+ X.fillStyle='rgba(0,0,0,.42)';X.beginPath();X.roundRect(VW/2-140,56,280,34,9);X.fill();
+ if(activeObjective.type==='hold'){
+  const o=activeObjective,p=clamp(o.progress/o.target,0,1);
+  dT('🎯 Zone halten',VW/2,67,10,'#80DEEA','center',true);
+  dBar(VW/2-110,76,220,8,p,'#00BCD4','rgba(255,255,255,.12)');
+ }else if(activeObjective.type==='hazard'){
+  const o=activeObjective;
+  dT('☢️ Hazard Source zerstören ('+Math.ceil(o.timer)+'s)',VW/2,67,10,'#FFCDD2','center',true);
+  dBar(VW/2-110,76,220,8,o.hp/o.mhp,'#FF5252','rgba(255,255,255,.12)');
+ }else if(activeObjective.type==='escort'){
+  const o=activeObjective,dist=dst({x:o.orbX,y:o.orbY},{x:o.machineX,y:o.machineY}),p=clamp(1-dist/o.startDist,0,1);
+  dT('⚡ Energie zur Maschine eskortieren',VW/2,67,10,'#FFE082','center',true);
+  dBar(VW/2-110,76,220,8,p,'#FFD54F','rgba(255,255,255,.12)');
+ }
+}
+if(objectivePenaltyT>0)dT('⚠️ Quelle aktiv: Feinde schneller ('+Math.ceil(objectivePenaltyT)+'s)',VW/2,96,9,'#FF8A80','center',true);
 dT('💀 '+kills,VW-12,15,14,'#fff','right',true);
 X.save();
 X.translate(VW-12,35);

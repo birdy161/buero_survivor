@@ -12,6 +12,7 @@ enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 gameTime=0;kills=0;coins=0;wave=1;waveT=0;spawnT=0;
 waveSpawned=0;waveTarget=0;
 arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;
+activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;
 combo=0;comboT=0;lastMS=0;comboSpdB=0;comboShield=0;
 bossRef=null;specCD=0;upChoices=[];wepState={clicks:0};hitTracker={};
 activeTemps={};tempData={};
@@ -23,7 +24,7 @@ function saveRunNow(){
 if(!P||state==='menu'||state==='charsel'||state==='shop'||state==='stats'||state==='gameover')return;
 save.run={
 v:1,selChar,state:'pause',
-gameTime,kills,coins,wave,waveT,spawnT,waveSpawned,waveTarget,combo,comboT,lastMS,comboSpdB,comboShield,specCD,
+gameTime,kills,coins,wave,waveT,spawnT,waveSpawned,waveTarget,objectiveSpawnT,objectivePenaltyT,activeObjective,combo,comboT,lastMS,comboSpdB,comboShield,specCD,
 activeTemps,tempData,
 P:{
 x:P.x,y:P.y,hp:P.hp,mhp:P.mhp,spd:P.spd,bdmg:P.bdmg,dmgM:P.dmgM,atkSpd:P.atkSpd,spdM:P.spdM,armor:P.armor,regen:P.regen,
@@ -58,14 +59,27 @@ if(!P.weps.length){const wd=WP[ch.wep];P.weps.push({...wd,id:ch.wep,timer:0,lv:1
 gameTime=Math.max(0,num(r.gameTime,0));kills=Math.max(0,Math.floor(num(r.kills,0)));coins=Math.max(0,Math.floor(num(r.coins,0)));wave=Math.max(1,Math.floor(num(r.wave,1)));
 waveT=Math.max(0,num(r.waveT,0));spawnT=Math.max(0,num(r.spawnT,0));
 waveSpawned=Math.max(0,Math.floor(num(r.waveSpawned,0)));waveTarget=Math.max(0,Math.floor(num(r.waveTarget,0)));
+objectiveSpawnT=Math.max(0,num(r.objectiveSpawnT,0));objectivePenaltyT=Math.max(0,num(r.objectivePenaltyT,0));activeObjective=r.activeObjective&&typeof r.activeObjective==='object'?r.activeObjective:null;
 combo=Math.max(0,Math.floor(num(r.combo,0)));comboT=Math.max(0,num(r.comboT,0));lastMS=Math.max(0,Math.floor(num(r.lastMS,0)));
 comboSpdB=Math.max(0,num(r.comboSpdB,0));comboShield=Math.max(0,num(r.comboShield,0));
 activeTemps=r.activeTemps||{};tempData=r.tempData||{};normalizeTempState();
 specCD=Math.max(0,num(r.specCD,0));bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;
+if(activeObjective&&activeObjective.type==='escort'){
+ const e=activeObjective;
+ e.orbX=num(e.orbX,P.x);e.orbY=num(e.orbY,P.y);e.machineX=num(e.machineX,P.x+200);e.machineY=num(e.machineY,P.y);
+ e.orbR=Math.max(4,num(e.orbR,BALANCE.objectives.escort.orbRadius));
+ e.machineR=Math.max(8,num(e.machineR,BALANCE.objectives.escort.machineRadius));
+ e.tether=Math.max(20,num(e.tether,BALANCE.objectives.escort.tetherDistance));
+ e.startDist=Math.max(1,num(e.startDist,dst({x:e.orbX,y:e.orbY},{x:e.machineX,y:e.machineY})));
+}else if(activeObjective&&activeObjective.type==='hold'){
+ const e=activeObjective;e.progress=Math.max(0,num(e.progress,0));e.x=num(e.x,P.x);e.y=num(e.y,P.y);e.r=Math.max(20,num(e.r,BALANCE.objectives.hold.radius));e.target=Math.max(1,num(e.target,BALANCE.objectives.hold.targetTime));e.decay=Math.max(0,num(e.decay,BALANCE.objectives.hold.decayPerSec));
+}else if(activeObjective&&activeObjective.type==='hazard'){
+ const e=activeObjective;e.hp=Math.max(1,num(e.hp,BALANCE.objectives.hazard.hp));e.mhp=Math.max(1,num(e.mhp,BALANCE.objectives.hazard.hp));e.timer=Math.max(0,num(e.timer,BALANCE.objectives.hazard.duration));e.pulseT=Math.max(0,num(e.pulseT,0));e.pulseEvery=Math.max(.1,num(e.pulseEvery,BALANCE.objectives.hazard.pulseEvery));e.pulseR=Math.max(20,num(e.pulseR,BALANCE.objectives.hazard.pulseRadius));e.pulseDmg=Math.max(1,num(e.pulseDmg,BALANCE.objectives.hazard.pulseDamage));e.r=Math.max(8,num(e.r,BALANCE.objectives.hazard.radius));e.x=num(e.x,P.x);e.y=num(e.y,P.y);
+}
 cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 }catch(e){
  clearRunSave();
- state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;waveSpawned=0;waveTarget=0;inputDir={x:0,y:0};joyAct=false;joyId=null;
+ state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;waveSpawned=0;waveTarget=0;activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;inputDir={x:0,y:0};joyAct=false;joyId=null;
 }
 }

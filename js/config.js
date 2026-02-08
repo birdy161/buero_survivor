@@ -13,6 +13,49 @@ const BALANCE={
   maxAliveBase:50,
   maxAlivePerWave:5
  },
+ objectives:{
+  spawnInterval:22,
+  minWave:2,
+  penaltyDuration:12,
+  penaltyEnemySpeedMult:1.15,
+  hold:{
+   radius:115,
+   targetTime:12,
+   decayPerSec:1.4,
+   rewardCoins:20,
+   rewardShield:2.5
+  },
+  hazard:{
+   radius:26,
+   hp:520,
+   duration:22,
+   pulseEvery:1.4,
+   pulseRadius:150,
+   pulseDamage:8,
+   rewardCoins:30,
+   rewardXp:45
+  },
+  escort:{
+   machineRadius:36,
+   orbRadius:11,
+   orbFollowSpeed:210,
+   targetApproachSpeed:170,
+   tetherDistance:250,
+   rewardCoins:25,
+   rewardEmpRadius:220,
+   rewardEmpDamage:90
+  }
+ },
+ drops:{
+  enemyXpMultiplier:1,
+  enemyCoinChance:0.3,
+  enemyCoinValueMultiplier:1,
+  enemyHpDropChance:0.03,
+  goldrushCoinHitChance:0.25,
+  expenseBonusCoinDrops:2,
+  bossCoinBurstCount:10,
+  bossCoinValueDivisor:10
+ },
  magnet:{
   baseRange:45,
   minRange:10,
@@ -35,7 +78,7 @@ const BALANCE={
     activeDuration:0.5,
     cooldown:1.2,
     enemyDamage:32,
-    playerDamage:8,
+    playerDamage:16,
     enemySlow:0.6
    }
   },
