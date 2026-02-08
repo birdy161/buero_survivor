@@ -114,7 +114,7 @@ parts.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,a=clamp(p.life/p.ml,0,1);
 
 // Player
 const px=P.x-cx,py=P.y-cy;
-if(P.hp>0){
+if(P.hp>0||pendingGameOverT>0){
  X.fillStyle='rgba(0,0,0,.25)';X.beginPath();X.ellipse(px,py+P.sz*.7,P.sz*.7,P.sz*.25,0,0,PI2);X.fill();
  // Shield/Combo shield
  if(P.shieldT>0||comboShield>0){
@@ -134,6 +134,10 @@ if(hasTemp('drone')){
 
 // Vignette for contrast depth
 if(vignetteGrad){X.fillStyle=vignetteGrad;X.fillRect(0,0,VW,VH)}
+if(impactFlash>0){
+ X.fillStyle=`rgba(255,255,255,${clamp(impactFlash,0,.75)})`;
+ X.fillRect(0,0,VW,VH);
+}
 
 rHUD();
 }
@@ -153,7 +157,12 @@ const wn=WNAMES[Math.min(wave-1,WNAMES.length-1)]||('Welle '+wave);
 dT('⏱ '+fmtT(gameTime),12,38,11,'rgba(255,255,255,.6)','left',true);
 dT('🌊 '+wn,VW/2,38,9,'rgba(255,200,100,.6)','center',true);
 dT('💀 '+kills,VW-12,15,14,'#fff','right',true);
-dT('🪙 '+coins,VW-12,35,12,'#FFD740','right',true);
+X.save();
+X.translate(VW-12,35);
+const cns=coinHudScale();
+X.scale(cns,cns);
+dT('🪙 '+coins,0,0,12,'#FFD740','right',true);
+X.restore();
 const activeKeys=Object.keys(activeTemps).sort((a,b)=>activeTemps[b]-activeTemps[a]).slice(0,4);
 if(activeKeys.length){
  const rowH=23,padTop=14;

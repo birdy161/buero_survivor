@@ -81,7 +81,7 @@ fd=cr?dmg*2:dmg;
 // Frozen enemies take 2x damage!
 if(e.freezeT>0)fd=Math.floor(fd*2);
 e.hp-=fd;e.flash=.12;
-fTxt(e.x,e.y-e.sz,(cr?'KRIT!':'')+fd,cr?'#FF5722':e.freezeT>0?'#00E5FF':'#FFD740',cr?20:15);
+fDmgTxt(e.x,e.y-e.sz,(cr?'KRIT!':'')+fd,cr?'#FF5722':e.freezeT>0?'#00E5FF':'#FFD740',cr?20:15);
 burst(e.x,e.y,2,e.elite?'#FFD700':'#fff',50,3,.15);sfx('hit');
 if(e.hp<=0)killE(e);
 }
@@ -140,7 +140,7 @@ if(e.infected){
   if(dst(e,e2)<80){hurtE(e2,Math.floor(P.bdmg*P.dmgM*1.5),true);e2.infected=true}}
 }
 
-if(e.isBoss){bossRef=null;burst(e.x,e.y,30,'#FFD700',180,8,.7);sfx('boom');cam.shake=15;
+if(e.isBoss){bossRef=null;burst(e.x,e.y,30,'#FFD700',180,8,.7);sfx('boom');cam.shake=18;triggerSlowMo(.08,.28,.4);
  for(let i=0;i<10;i++)pickups.push({x:e.x+rng(-50,50),y:e.y+rng(-50,50),type:'coin',val:Math.floor(e.co/10),life:15});
  spawnTempPickup(e.x,e.y,.9)}
 // Clean hitTracker
@@ -148,7 +148,7 @@ delete hitTracker[''+e.uid];
 }
 
 function pHurt(d){
-if(!P||P.invT>0||P.shieldT>0||comboShield>0)return;
+if(!P||P.hp<=0||P.invT>0||P.shieldT>0||comboShield>0)return;
 if((tempData.bubbleCharges||0)>0){
  tempData.bubbleCharges--;P.invT=.15;
  burst(P.x,P.y,8,'#B3E5FC',90,4,.25);
@@ -157,11 +157,16 @@ if((tempData.bubbleCharges||0)>0){
  return;
 }
 const fd=Math.max(1,d-(P.armor+getArmorBonus()));P.hp-=fd;P.invT=.4;
-fTxt(P.x,P.y-20,'-'+fd,'#FF1744',18);burst(P.x,P.y,5,'#FF1744',80,4,.3);
+fDmgTxt(P.x,P.y-20,'-'+fd,'#FF1744',18);burst(P.x,P.y,5,'#FF1744',80,4,.3);
 sfx('hurt');cam.shake=5;
 // Combo broken by damage!
 if(combo>=5){fTxt(P.x,P.y-40,'COMBO LOST!','#FF5252',14);combo=0;comboT=0;lastMS=0}
-if(P.hp<=0){P.hp=0;gameOver()}
+if(P.hp<=0&&pendingGameOverT<=0){
+ P.hp=0.01;
+ pendingGameOverT=.28;
+ cam.shake=Math.max(cam.shake,12);
+ triggerSlowMo(.08,.28,.45);
+}
 }
 
 function useSpec(){
@@ -182,4 +187,4 @@ switch(ch.spec){
 
 function gameOver(){state='gameover';save.totalKills+=kills;save.coins+=coins;
 if(gameTime>save.bestTime)save.bestTime=gameTime;if(wave>save.bestWave)save.bestWave=wave;
-if(kills>save.bestKills)save.bestKills=kills;if(combo>save.bestCombo)save.bestCombo=combo;clearRunSave();doS();sfx('boom')}
+if(kills>save.bestKills)save.bestKills=kills;if(combo>save.bestCombo)save.bestCombo=combo;pendingGameOverT=0;clearRunSave();doS();sfx('boom')}

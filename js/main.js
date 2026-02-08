@@ -9,11 +9,16 @@ if(recoveredFromFatal)return;
 recoveredFromFatal=true;
 try{clearRunSave()}catch(e){}
 state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];inputDir={x:0,y:0};joyAct=false;joyId=null;
+pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 }
 function loop(ts){
 requestAnimationFrame(loop);
 try{
- if(!lastT)lastT=ts;let dt=(ts-lastT)/1000;lastT=ts;if(dt>.1)dt=.1;
+ if(!lastT)lastT=ts;
+ let realDt=(ts-lastT)/1000;
+ lastT=ts;
+ if(realDt>.1)realDt=.1;
+ const dt=realDt*tickTimeScale(realDt);
  update(dt);render();
 }catch(e){recoverFromFatal(e,'loop')}
 }

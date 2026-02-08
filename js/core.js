@@ -221,6 +221,14 @@ let parts=[];
 function addP(x,y,vx,vy,l,c,s,tp){parts.push({x,y,vx,vy,life:l,ml:l,color:c,size:s,type:tp||'c',text:''})}
 function burst(x,y,n,c,sp,sz,l){sp=sp||120;sz=sz||4;l=l||.5;for(let i=0;i<n;i++){const a=rng(0,PI2),s=rng(sp*.3,sp);addP(x,y,Math.cos(a)*s,Math.sin(a)*s,rng(l*.5,l),c,rng(sz*.5,sz))}}
 function fTxt(x,y,t,c,s){s=s||16;parts.push({x,y,vx:rng(-15,15),vy:-55,life:1.2,ml:1.2,color:c||'#fff',size:s,type:'t',text:t})}
+function fDmgTxt(x,y,t,c,s){
+s=s||16;
+const a=-PI/2+rng(-PI/4,PI/4),sp=rng(290,350);
+parts.push({
+ x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1.15,ml:1.15,color:c||'#fff',size:s,type:'t',text:t,
+ txtFx:'dmg',hang:.2,grav:520
+});
+}
 
 // ═══════ STATE ═══════
 let state='menu',P=null; // P = player
@@ -231,10 +239,40 @@ let bossRef=null,specCD=0,worldW=3000,worldH=3000,menuA=0;
 let cam={x:0,y:0,shake:0};
 let inputDir={x:0,y:0},joyAct=false,joyS={x:0,y:0},joyId=null,keys={},taps=[],upChoices=[];
 let runSaveTimer=0;
+let timeScale=1,timeScaleT=0,pendingGameOverT=0;
+let impactFlash=0;
+let coinHudPulse=0;
 let activeTemps={},tempData={};
 // Weapon state tracking
 let wepState={clicks:0}; // for mouse multi-click
 let hitTracker={}; // for pencil stacking
+function triggerSlowMo(scale,dur,flash){
+const sc=clamp(Number(scale)||1,.05,1),du=Math.max(0,Number(dur)||0);
+timeScale=Math.min(timeScale,sc);
+timeScaleT=Math.max(timeScaleT,du);
+impactFlash=Math.max(impactFlash,clamp(Number(flash)||.22,0,.7));
+}
+function tickTimeScale(realDt){
+if(impactFlash>0)impactFlash=Math.max(0,impactFlash-realDt*2.6);
+if(timeScaleT>0){
+ timeScaleT-=realDt;
+ if(timeScaleT<=0){timeScaleT=0;timeScale=1}
+}else timeScale=1;
+return timeScale;
+}
+function triggerCoinHudPulse(){
+coinHudPulse=.32;
+}
+function tickCoinHudPulse(dt){
+if(coinHudPulse>0)coinHudPulse=Math.max(0,coinHudPulse-dt);
+}
+function coinHudScale(){
+if(coinHudPulse<=0)return 1;
+const t=1-coinHudPulse/.32;
+if(t<.18)return lerp(1,1.2,t/.18);
+const u=(t-.18)/.82;
+return 1+.2*Math.exp(-4*u)*Math.cos(10*u);
+}
 
 // ═══════ INPUT ═══════
 document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;e.preventDefault()});

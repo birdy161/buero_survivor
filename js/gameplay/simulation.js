@@ -32,9 +32,41 @@ bt.elite=false;bt.infected=false;bt.chargeT=0;bt.chargeCD=0;bt.uid=Math.random()
 bossRef=bt;enemies.push(bt);sfx('boss');
 }
 
+function tickParticles(dt){
+for(let i=parts.length-1;i>=0;i--){const p=parts[i];
+ if(p.type==='t'&&p.txtFx==='dmg'){
+  // Damage number motion: pop up, short hang, then drift down with gravity.
+  p.vx*=.9;
+  if((p.hang||0)>0){
+   p.hang-=dt;
+   p.vy*=Math.max(.2,1-dt*8);
+  }else{
+   p.vy+=p.grav*dt;
+  }
+  p.x+=p.vx*dt;p.y+=p.vy*dt;
+ }else{
+  p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.type==='c')p.vy+=200*dt;p.vx*=.97;
+ }
+ p.life-=dt;
+ if(p.life<=0)parts.splice(i,1)}
+}
+
+function tickCamera(dt){
+cam.x=lerp(cam.x,P.x-VW/2,6*dt);cam.y=lerp(cam.y,P.y-VH/2,6*dt);
+if(cam.shake>.5)cam.shake*=.88;else cam.shake=0;
+}
+
 function update(dt){
 if(state!=='playing'||!P)return;
 gameTime+=dt;getKI();
+tickCoinHudPulse(dt);
+if(pendingGameOverT>0){
+ pendingGameOverT-=dt;
+ tickParticles(dt);
+ tickCamera(dt);
+ if(pendingGameOverT<=0){P.hp=0;gameOver()}
+ return;
+}
 
 // Movement (with combo speed bonus)
 const spd=P.spd*P.spdM*(1+comboSpd()+getMoveSpeedBonus());
@@ -170,18 +202,15 @@ for(let i=pickups.length-1;i>=0;i--){
  if(d<P.magnet){const a=ang(p,P),s=Math.max(250,500-d*3);p.x+=Math.cos(a)*s*dt;p.y+=Math.sin(a)*s*dt}
  if(d<22){
   if(p.type==='xp'){addXP(p.val);sfx('xp')}
-  else if(p.type==='coin'){coins+=p.val;sfx('coin')}
+  else if(p.type==='coin'){coins+=p.val;triggerCoinHudPulse();sfx('coin')}
   else if(p.type==='hp'){P.hp=Math.min(P.mhp,P.hp+p.val);fTxt(P.x,P.y-20,'+'+p.val,'#4CAF50',16);sfx('xp')}
   else if(p.type==='temp'){const t=TEMP_BY_ID[p.id];if(t){addTemp(t.id,t.dur);sfx('power')}}
   pickups.splice(i,1)}}
 
 // Particles
-for(let i=parts.length-1;i>=0;i--){const p=parts[i];
- p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.type==='c')p.vy+=200*dt;p.vx*=.97;p.life-=dt;
- if(p.life<=0)parts.splice(i,1)}
+tickParticles(dt);
 
-cam.x=lerp(cam.x,P.x-VW/2,6*dt);cam.y=lerp(cam.y,P.y-VH/2,6*dt);
-if(cam.shake>.5)cam.shake*=.88;else cam.shake=0;
+tickCamera(dt);
 runSaveTimer+=dt;
 if(runSaveTimer>=1){runSaveTimer=0;saveRunNow()}
 }

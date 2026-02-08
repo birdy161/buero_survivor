@@ -13,7 +13,7 @@ gameTime=0;kills=0;coins=0;wave=1;waveT=0;spawnT=0;
 combo=0;comboT=0;lastMS=0;comboSpdB=0;comboShield=0;
 bossRef=null;specCD=0;upChoices=[];wepState={clicks:0};hitTracker={};
 activeTemps={};tempData={};
-cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='playing';runSaveTimer=0;
+cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='playing';runSaveTimer=0;pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 save.games++;save.run=null;doS();
 }
 
@@ -59,7 +59,7 @@ combo=Math.max(0,Math.floor(num(r.combo,0)));comboT=Math.max(0,num(r.comboT,0));
 comboSpdB=Math.max(0,num(r.comboSpdB,0));comboShield=Math.max(0,num(r.comboShield,0));
 activeTemps=r.activeTemps||{};tempData=r.tempData||{};normalizeTempState();
 specCD=Math.max(0,num(r.specCD,0));bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
-cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;
+cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 }catch(e){
  clearRunSave();
  state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];inputDir={x:0,y:0};joyAct=false;joyId=null;
