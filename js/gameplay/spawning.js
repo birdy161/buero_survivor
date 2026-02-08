@@ -366,8 +366,8 @@ if(roll<.67){
  return;
 }
 const ec=oc.escort,p=pickArenaPos(260,700),ox=clamp(P.x+rng(-35,35),30,worldW-30),oy=clamp(P.y+rng(-35,35),30,worldH-30);
-activeObjective={type:'escort',orbX:ox,orbY:oy,orbR:ec.orbRadius,machineX:p.x,machineY:p.y,machineR:ec.machineRadius,tether:ec.tetherDistance,startDist:Math.max(1,dst({x:ox,y:oy},{x:p.x,y:p.y}))};
-fTxt(p.x,p.y-26,'⚡ Energie eskortieren','#FFE082',16);
+activeObjective={type:'escort',orbX:ox,orbY:oy,orbR:ec.orbRadius,machineX:p.x,machineY:p.y,machineR:ec.machineRadius,tether:ec.tetherDistance,startDist:Math.max(1,dst({x:ox,y:oy},{x:p.x,y:p.y})),timer:ec.duration};
+fTxt(p.x,p.y-26,'✉️ Post zustellen','#FFE082',16);
 }
 
 function completeObjective(){
@@ -376,16 +376,22 @@ const o=activeObjective,oc=BALANCE.objectives;
 if(o.type==='hold'){
  coins+=oc.hold.rewardCoins;triggerCoinHudPulse();
  P.shieldT=Math.max(P.shieldT,oc.hold.rewardShield);
+ objectiveRewardText=`Belohnung: +${oc.hold.rewardCoins} Münzen, Schild ${oc.hold.rewardShield.toFixed(1)}s`;
+ objectiveRewardT=2.6;
  fTxt(P.x,P.y-34,'✅ Zone gesichert','#80CBC4',16);sfx('coin');
 }else if(o.type==='hazard'){
  coins+=oc.hazard.rewardCoins;triggerCoinHudPulse();addXP(oc.hazard.rewardXp);
+ objectiveRewardText=`Belohnung: +${oc.hazard.rewardCoins} Münzen, +${oc.hazard.rewardXp} XP`;
+ objectiveRewardT=2.6;
  burst(o.x,o.y,18,'#80DEEA',170,6,.55);fTxt(o.x,o.y-26,'✅ Quelle zerstört','#80DEEA',16);sfx('lvl');
 }else if(o.type==='escort'){
  const ec=oc.escort;
  coins+=ec.rewardCoins;triggerCoinHudPulse();
+ objectiveRewardText=`Belohnung: +${ec.rewardCoins} Münzen, EMP (${ec.rewardEmpDamage} DMG)`;
+ objectiveRewardT=2.6;
  burst(o.machineX,o.machineY,22,'#FFD54F',200,6,.55);
  for(const e of enemies){if(e.hp>0&&dst({x:o.machineX,y:o.machineY},e)<ec.rewardEmpRadius)hurtE(e,ec.rewardEmpDamage,true)}
- fTxt(o.machineX,o.machineY-24,'✅ Maschine online','#FFD54F',16);sfx('power');
+ fTxt(o.machineX,o.machineY-24,'✅ Post zugestellt','#FFD54F',16);sfx('power');
 }
 activeObjective=null;objectiveSpawnT=0;
 }
@@ -395,6 +401,8 @@ if(!activeObjective)return;
 if(activeObjective.type==='hazard'){
  objectivePenaltyT=Math.max(objectivePenaltyT,BALANCE.objectives.penaltyDuration);
  fTxt(P.x,P.y-36,'❌ Quelle aktiv! Feinde schneller','#FF8A80',15);
+}else if(activeObjective.type==='escort'){
+ fTxt(P.x,P.y-36,'❌ Post verspätet','#FFAB91',15);
 }
 activeObjective=null;objectiveSpawnT=0;
 }
@@ -428,6 +436,7 @@ if(o.type==='hazard'){
 }
 if(o.type==='escort'){
  const ec=BALANCE.objectives.escort,orb={x:o.orbX,y:o.orbY};
+ o.timer=Math.max(0,(o.timer||0)-dt);
  if(dst(orb,P)<=o.tether){
   const a=ang(orb,P);
   o.orbX+=Math.cos(a)*ec.orbFollowSpeed*dt;
@@ -439,5 +448,6 @@ if(o.type==='escort'){
  }
  o.orbX=clamp(o.orbX,20,worldW-20);o.orbY=clamp(o.orbY,20,worldH-20);
  if(dst({x:o.orbX,y:o.orbY},{x:o.machineX,y:o.machineY})<=o.machineR)completeObjective();
+ else if(o.timer<=0)failObjective();
 }
 }

@@ -238,6 +238,7 @@ let waveSpawned=0,waveTarget=0;
 let directorWaveTime=0,directorAmbientT=0,directorBudget=0,directorEvents=[];
 let arenaHazards=[],arenaTools=[],arenaHazSpawnT=0,arenaToolSpawnT=0;
 let activeObjective=null,objectiveSpawnT=0,objectivePenaltyT=0;
+let objectiveRewardText='',objectiveRewardT=0;
 let combo=0,comboT=0,lastMS=0,comboSpdB=0,comboShield=0;
 let bossRef=null,specCD=0,worldW=3000,worldH=3000,menuA=0;
 let cam={x:0,y:0,shake:0};

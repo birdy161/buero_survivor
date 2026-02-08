@@ -17,6 +17,7 @@ activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;
 combo=0;comboT=0;lastMS=0;comboSpdB=0;comboShield=0;
 bossRef=null;specCD=0;upChoices=[];wepState={clicks:0};hitTracker={};
 activeTemps={};tempData={};
+objectiveRewardText='';objectiveRewardT=0;
 cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='playing';runSaveTimer=0;pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 save.games++;save.run=null;doS();
 }
@@ -67,6 +68,7 @@ comboSpdB=Math.max(0,num(r.comboSpdB,0));comboShield=Math.max(0,num(r.comboShiel
 activeTemps=r.activeTemps||{};tempData=r.tempData||{};normalizeTempState();
 specCD=Math.max(0,num(r.specCD,0));bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;
+objectiveRewardText='';objectiveRewardT=0;
 if(!directorEvents.length&&typeof buildDirectorWave==='function'&&P&&waveT<=0)buildDirectorWave(Math.max(1,wave));
 if(activeObjective&&activeObjective.type==='escort'){
  const e=activeObjective;
@@ -75,6 +77,7 @@ if(activeObjective&&activeObjective.type==='escort'){
  e.machineR=Math.max(8,num(e.machineR,BALANCE.objectives.escort.machineRadius));
  e.tether=Math.max(20,num(e.tether,BALANCE.objectives.escort.tetherDistance));
  e.startDist=Math.max(1,num(e.startDist,dst({x:e.orbX,y:e.orbY},{x:e.machineX,y:e.machineY})));
+ e.timer=Math.max(0,num(e.timer,BALANCE.objectives.escort.duration));
 }else if(activeObjective&&activeObjective.type==='hold'){
  const e=activeObjective;e.progress=Math.max(0,num(e.progress,0));e.x=num(e.x,P.x);e.y=num(e.y,P.y);e.r=Math.max(20,num(e.r,BALANCE.objectives.hold.radius));e.target=Math.max(1,num(e.target,BALANCE.objectives.hold.targetTime));e.decay=Math.max(0,num(e.decay,BALANCE.objectives.hold.decayPerSec));
 }else if(activeObjective&&activeObjective.type==='hazard'){
@@ -83,6 +86,6 @@ if(activeObjective&&activeObjective.type==='escort'){
 cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 }catch(e){
  clearRunSave();
- state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;waveSpawned=0;waveTarget=0;directorWaveTime=0;directorAmbientT=0;directorBudget=0;directorEvents=[];activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;inputDir={x:0,y:0};joyAct=false;joyId=null;
+ state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;waveSpawned=0;waveTarget=0;directorWaveTime=0;directorAmbientT=0;directorBudget=0;directorEvents=[];activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;objectiveRewardText='';objectiveRewardT=0;inputDir={x:0,y:0};joyAct=false;joyId=null;
 }
 }

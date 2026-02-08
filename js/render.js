@@ -79,12 +79,12 @@ if(activeObjective){
   X.strokeStyle='rgba(0,188,212,.45)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.stroke();
   X.strokeStyle='#00E5FF';X.lineWidth=4;X.beginPath();X.arc(sx,sy,o.r+5,-PI/2,-PI/2+p*PI2);X.stroke();
   dT('HOLD',sx,sy,12,'#80DEEA','center',true);
- }else if(o.type==='escort'){
-  const msx=o.machineX-cx,msy=o.machineY-cy,osx=o.orbX-cx,osy=o.orbY-cy;
-  X.fillStyle='rgba(255,213,79,.08)';X.beginPath();X.arc(msx,msy,o.machineR+12,0,PI2);X.fill();
-  X.strokeStyle='rgba(255,213,79,.55)';X.lineWidth=2.2;X.beginPath();X.arc(msx,msy,o.machineR+12,0,PI2);X.stroke();
-  X.strokeStyle='rgba(255,235,130,.45)';X.lineWidth=1.5;X.beginPath();X.moveTo(osx,osy);X.lineTo(msx,msy);X.stroke();
- }
+}else if(o.type==='escort'){
+ const msx=o.machineX-cx,msy=o.machineY-cy,osx=o.orbX-cx,osy=o.orbY-cy;
+ X.fillStyle='rgba(255,213,79,.08)';X.beginPath();X.arc(msx,msy,o.machineR+12,0,PI2);X.fill();
+ X.strokeStyle='rgba(255,213,79,.55)';X.lineWidth=2.2;X.beginPath();X.arc(msx,msy,o.machineR+12,0,PI2);X.stroke();
+ X.strokeStyle='rgba(255,235,130,.45)';X.lineWidth=1.5;X.beginPath();X.moveTo(osx,osy);X.lineTo(msx,msy);X.stroke();
+}
 }
 
 // World border (visible when reaching map limits)
@@ -194,11 +194,11 @@ if(activeObjective){
    X.lineTo(px+Math.cos(aa+2.5)*9,py+Math.sin(aa+2.5)*9);
    X.lineTo(px+Math.cos(aa-2.5)*9,py+Math.sin(aa-2.5)*9);X.closePath();X.fill();
    dT('SOURCE',px,py-14,8,'#FFCDD2','center',true);
-  }
- }else if(o.type==='escort'){
-  dE('⚡',o.orbX-cx,o.orbY-cy,18);
-  dE('🏭',o.machineX-cx,o.machineY-cy,20);
  }
+}else if(o.type==='escort'){
+ dE('✉️',o.orbX-cx,o.orbY-cy,18);
+ dE('📮',o.machineX-cx,o.machineY-cy,20);
+}
 }
 
 // Particles
@@ -265,13 +265,18 @@ if(activeObjective){
   const o=activeObjective;
   dT('☢️ Hazard Source zerstören ('+Math.ceil(o.timer)+'s)',VW/2,67,10,'#FFCDD2','center',true);
   dBar(VW/2-110,76,220,8,o.hp/o.mhp,'#FF5252','rgba(255,255,255,.12)');
- }else if(activeObjective.type==='escort'){
-  const o=activeObjective,dist=dst({x:o.orbX,y:o.orbY},{x:o.machineX,y:o.machineY}),p=clamp(1-dist/o.startDist,0,1);
-  dT('⚡ Energie zur Maschine eskortieren',VW/2,67,10,'#FFE082','center',true);
-  dBar(VW/2-110,76,220,8,p,'#FFD54F','rgba(255,255,255,.12)');
- }
+}else if(activeObjective.type==='escort'){
+ const o=activeObjective,dist=dst({x:o.orbX,y:o.orbY},{x:o.machineX,y:o.machineY}),p=clamp(1-dist/o.startDist,0,1);
+ dT('✉️ Post zur Mailbox bringen ('+Math.ceil(o.timer||0)+'s)',VW/2,67,10,'#FFE082','center',true);
+ dBar(VW/2-110,76,220,8,p,'#FFD54F','rgba(255,255,255,.12)');
+}
 }
 if(objectivePenaltyT>0)dT('⚠️ Quelle aktiv: Feinde schneller ('+Math.ceil(objectivePenaltyT)+'s)',VW/2,96,9,'#FF8A80','center',true);
+if(objectiveRewardT>0){
+ const a=clamp(objectiveRewardT/2.6,0,1);
+ X.globalAlpha=.35+.5*a;X.fillStyle='rgba(20,30,10,.8)';X.beginPath();X.roundRect(VW/2-175,104,350,24,8);X.fill();X.globalAlpha=1;
+ dT('🎁 '+objectiveRewardText,VW/2,116,9,'#C5E1A5','center',true);
+}
 dT('💀 '+kills,VW-12,15,14,'#fff','right',true);
 X.save();
 X.translate(VW-12,35);

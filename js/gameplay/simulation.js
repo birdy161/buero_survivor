@@ -42,6 +42,7 @@ if(inputDir.x||inputDir.y)P.facing={x:inputDir.x,y:inputDir.y};
 
 if(P.invT>0)P.invT-=dt;
 if(P.shieldT>0)P.shieldT-=dt;
+if(objectiveRewardT>0)objectiveRewardT=Math.max(0,objectiveRewardT-dt);
 if(comboShield>0)comboShield-=dt;
 if(comboSpdB>0)comboSpdB-=dt;
 if(specCD>0)specCD-=dt;
