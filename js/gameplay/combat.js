@@ -120,7 +120,7 @@ switch(pr.mech){
  case'infect':{ // Spritze: infect enemy
   e.infected=true;break;}
  case'goldrush':{ // Megafon: Bonus-Münze bei Treffer
-  if(Math.random()<BALANCE.drops.goldrushCoinHitChance){pickups.push({x:e.x+rng(-8,8),y:e.y+rng(-8,8),type:'coin',val:1,life:12});sfx('coin')}
+  if(Math.random()<BALANCE.drops.goldrushCoinHitChance){pickups.push({x:e.x+rng(-8,8),y:e.y+rng(-8,8),type:'coin',val:1,life:BALANCE.drops.coinPickupLifetime});sfx('coin')}
   break;}
  case'pin':{ // Tacker: pin in place
   e.pinT=Math.max(e.pinT,.5);break;}
@@ -169,11 +169,11 @@ if((e.freezeT||0)>0&&pr.own==='p'&&pr.dmg>=P.bdmg*1.2){
 
 function killE(e){
 if(!P)return;e.hp=0;kills++;addCombo();
-const cxp=comboXp(); // combo passive XP bonus
-pickups.push({x:e.x,y:e.y,type:'xp',val:Math.max(1,Math.floor(e.xp*P.xpM*cxp*BALANCE.drops.enemyXpMultiplier)),life:15});
-if(Math.random()<BALANCE.drops.enemyCoinChance)pickups.push({x:e.x+rng(-10,10),y:e.y+rng(-10,10),type:'coin',val:Math.max(1,Math.floor((e.co||1)*BALANCE.drops.enemyCoinValueMultiplier)),life:15});
+const cxp=comboXp(),dd=BALANCE.drops; // combo passive XP bonus
+pickups.push({x:e.x,y:e.y,type:'xp',val:Math.max(1,Math.floor(e.xp*P.xpM*cxp*dd.enemyXpMultiplier)),life:dd.xpPickupLifetime});
+if(Math.random()<dd.enemyCoinChance)pickups.push({x:e.x+rng(-10,10),y:e.y+rng(-10,10),type:'coin',val:Math.max(1,Math.floor((e.co||1)*dd.enemyCoinValueMultiplier)),life:dd.coinPickupLifetime});
 if(Math.random()<BALANCE.drops.enemyHpDropChance)pickups.push({x:e.x,y:e.y,type:'hp',val:Math.floor(P.mhp*.1),life:15});
-if(hasTemp('expense'))for(let i=0;i<BALANCE.drops.expenseBonusCoinDrops;i++)pickups.push({x:e.x+rng(-14,14),y:e.y+rng(-14,14),type:'coin',val:1,life:10});
+if(hasTemp('expense'))for(let i=0;i<dd.expenseBonusCoinDrops;i++)pickups.push({x:e.x+rng(-14,14),y:e.y+rng(-14,14),type:'coin',val:1,life:dd.coinPickupLifetime});
 spawnTempPickup(e.x,e.y,e.isBoss?.35:.04);
 burst(e.x,e.y,e.elite?15:8,e.elite?'#FFD700':'#aaa',100,5,.4);sfx('kill');
 
@@ -185,7 +185,7 @@ if(e.infected){
 }
 
 if(e.isBoss){bossRef=null;burst(e.x,e.y,30,'#FFD700',180,8,.7);sfx('boom');cam.shake=18;triggerSlowMo(.08,.28,.4);
- for(let i=0;i<BALANCE.drops.bossCoinBurstCount;i++)pickups.push({x:e.x+rng(-50,50),y:e.y+rng(-50,50),type:'coin',val:Math.max(1,Math.floor(e.co/BALANCE.drops.bossCoinValueDivisor)),life:15});
+ for(let i=0;i<dd.bossCoinBurstCount;i++)pickups.push({x:e.x+rng(-50,50),y:e.y+rng(-50,50),type:'coin',val:Math.max(1,Math.floor(e.co/dd.bossCoinValueDivisor)),life:dd.coinPickupLifetime});
  spawnTempPickup(e.x,e.y,.9)}
 // Clean hitTracker
 delete hitTracker[''+e.uid];

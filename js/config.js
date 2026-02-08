@@ -47,6 +47,8 @@ const BALANCE={
   }
  },
  drops:{
+  xpPickupLifetime:15,
+  coinPickupLifetime:15,
   enemyXpMultiplier:1,
   enemyCoinChance:0.3,
   enemyCoinValueMultiplier:1,
