@@ -33,7 +33,8 @@ const fmtT=s=>{const m=Math.floor(s/60),c=Math.floor(s%60);return m+':'+(c<10?'0
 
 // ═══════ AUDIO ═══════
 let AC=null;function initA(){if(!AC)try{AC=new(AudioContext||webkitAudioContext)}catch(e){}}
-function sfx(t){if(!AC)return;try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);const n=AC.currentTime;
+let muted=false;
+function sfx(t){if(!AC||muted)return;try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);const n=AC.currentTime;
 if(t==='boom'){const s=AC.createBufferSource(),b=AC.createBuffer(1,AC.sampleRate*.25,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);s.buffer=b;const gn=AC.createGain();gn.gain.setValueAtTime(.13,n);gn.gain.exponentialRampToValueAtTime(.001,n+.25);s.connect(gn);gn.connect(AC.destination);s.start(n);return}
 const P={shoot:[600,150,.08,'square'],hit:[300,80,.08,'sawtooth'],kill:[500,900,.07,'square'],xp:[700,1400,.04,'sine'],
 lvl:[523,1047,.1,'sine'],coin:[988,1319,.05,'sine'],hurt:[200,50,.09,'sawtooth'],boss:[80,60,.13,'sawtooth'],
@@ -42,7 +43,7 @@ const p=P[t];if(!p)return;o.type=p[3];o.frequency.setValueAtTime(p[0],n);o.frequ
 g.gain.setValueAtTime(p[2],n);g.gain.exponentialRampToValueAtTime(.001,n+.15);o.start(n);o.stop(n+.16)}catch(e){}}
 
 // ═══════ SAVE ═══════
-let save={coins:0,totalKills:0,games:0,bestTime:0,bestWave:0,bestKills:0,bestCombo:0,up:{hp:0,dmg:0,spd:0,armor:0,luck:0,xp:0},unlocked:[0],run:null};
+let save={coins:0,totalKills:0,games:0,bestTime:0,bestWave:0,bestKills:0,bestCombo:0,muted:false,up:{hp:0,dmg:0,spd:0,armor:0,luck:0,xp:0},unlocked:[0],run:null};
 const SAVE_KEY='bs5',COOKIE_MAX_AGE=60*60*24*365*5;
 const COOKIE_SAFE_BYTES=3800; // practical cap below common ~4KB cookie limit
 function getCookie(name){
@@ -53,11 +54,13 @@ return v.pop().split(';').shift();
 function mergeSave(raw){
 if(!raw||typeof raw!=='object')return;
 const merged={...save,...raw};
+merged.muted=!!merged.muted;
 if(!merged.up||typeof merged.up!=='object')merged.up={...save.up};
 else merged.up={...save.up,...merged.up};
 if(!Array.isArray(merged.unlocked))merged.unlocked=[0];
 if(merged.run!==null&&typeof merged.run!=='object')merged.run=null;
 save=merged;
+muted=save.muted;
 }
 function loadS(){
 try{

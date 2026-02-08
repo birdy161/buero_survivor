@@ -468,7 +468,11 @@ btns=[];
 X.fillStyle='rgba(255,255,255,.08)';X.beginPath();X.roundRect(VW/2-100,VH*.46,200,44,12);X.fill();
 dT('▶ WEITER',VW/2,VH*.46+22,15,'#fff');btn(VW/2,VH*.46+22,200,44,()=>{state='playing'});
 X.fillStyle='rgba(255,255,255,.08)';X.beginPath();X.roundRect(VW/2-100,VH*.56,200,44,12);X.fill();
-dT('🏠 KÜNDIGEN',VW/2,VH*.56+22,14,'#FF8A80');btn(VW/2,VH*.56+22,200,44,()=>{state='menu';P=null;clearRunSave()});
+const muteLbl=muted?'🔇 STUMM: AN':'🔊 STUMM: AUS';
+dT(muteLbl,VW/2,VH*.56+22,13,'#B3E5FC');
+btn(VW/2,VH*.56+22,200,44,()=>{muted=!muted;save.muted=muted;doS()});
+X.fillStyle='rgba(255,255,255,.08)';X.beginPath();X.roundRect(VW/2-100,VH*.66,200,44,12);X.fill();
+dT('🏠 KÜNDIGEN',VW/2,VH*.66+22,14,'#FF8A80');btn(VW/2,VH*.66+22,200,44,()=>{state='menu';P=null;clearRunSave()});
 chkB(function(){const t=[...taps];taps=[];return t}());
 }
 
