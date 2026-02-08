@@ -5,12 +5,22 @@ if(!P)return;
 opts=opts||{};
 let sx,sy;
 if(Number.isFinite(opts.x)&&Number.isFinite(opts.y)){sx=opts.x;sy=opts.y}
-else{
+else if(opts.edgeSpawn){
+ const side=rngI(0,3),mx=VW*.52,my=VH*.52;
+ if(side===0){sx=clamp(P.x-mx,20,worldW-20);sy=clamp(P.y+rng(-my,my),20,worldH-20)}
+ else if(side===1){sx=clamp(P.x+mx,20,worldW-20);sy=clamp(P.y+rng(-my,my),20,worldH-20)}
+ else if(side===2){sx=clamp(P.x+rng(-mx,mx),20,worldW-20);sy=clamp(P.y-my,20,worldH-20)}
+ else{sx=clamp(P.x+rng(-mx,mx),20,worldW-20);sy=clamp(P.y+my,20,worldH-20)}
+}else{
  const a=rng(0,PI2),d=Math.max(VW,VH)*.55+rng(30,120);
  sx=P.x+Math.cos(a)*d;sy=P.y+Math.sin(a)*d;
 }
 let et=null;
-if(Number.isInteger(opts.etIndex)&&ET[opts.etIndex])et=ET[opts.etIndex];
+if(opts.special){
+ const idx=ET.findIndex(e=>e.special===opts.special);
+ if(idx>=0)et=ET[idx];
+}
+if(!et&&Number.isInteger(opts.etIndex)&&ET[opts.etIndex])et=ET[opts.etIndex];
 else if(opts.role==='fast'){
  const fi=[3,4,7,11].filter(i=>i<ET.length);et=ET[fi[rngI(0,fi.length-1)]||0];
 }else if(opts.role==='tank'){
@@ -111,6 +121,25 @@ const sw=scaledWave(wv);
 if(sw<=3)return'weak';
 if(sw<=7)return'fast';
 return'tank';
+}
+
+function countSpecialAlive(type){
+let c=0;
+for(const e of enemies)if(e.hp>0&&e.special===type)c++;
+return c;
+}
+
+function rollAmbientSpecial(){
+const se=BALANCE.director.specialEnemies||{};
+const mR=Math.max(0,Number(se.micromanagerRate||0)),sR=Math.max(0,Number(se.sniperRate||0));
+const mMax=Math.max(0,Number(se.maxMicromanagerAlive||0)),sMax=Math.max(0,Number(se.maxSniperAlive||0));
+const canM=countSpecialAlive('micromanager')<mMax,canS=countSpecialAlive('sniper')<sMax;
+const total=(canM?mR:0)+(canS?sR:0);
+if(total<=0)return'';
+const r=Math.random()*total;
+if(canM&&r<mR)return'micromanager';
+if(canS)return'sniper';
+return'';
 }
 
 function roleCost(role){
@@ -247,6 +276,18 @@ else if(ev.type==='STAMPEDE')spawnStampedeEvent(wave,ev.count,useRole,etIndex);
 else spawnAmbushEvent(wave,useRole,etIndex);
 }
 
+function applyMicromanagerBuffs(){
+const rr=(BALANCE.director.specialEnemies?.micromanager?.buffRadius)||220;
+for(const e of enemies){e.mmBuff=false}
+const ms=enemies.filter(e=>e.hp>0&&e.special==='micromanager');
+for(const m of ms){
+ for(const e of enemies){
+  if(e===m||e.hp<=0)continue;
+  if(dst(m,e)<=rr)e.mmBuff=true;
+ }
+}
+}
+
 function buildDirectorWave(wv){
 wave=wv;
 waveSpawned=0;waveTarget=0;spawnT=0;
@@ -345,6 +386,35 @@ for(let i=arenaTools.length-1;i>=0;i--){
    if(waveT<=0)for(let i=0;i<BALANCE.arena.tools.coffee.enemySpawnOnUse;i++)spawnE();
   }
  }
+}
+}
+
+function spawnPhotocopier(){
+if(!P)return;
+const pc=BALANCE.environment.photocopier||{};
+if(photocopiers.length>=(pc.maxActive||0))return;
+const p=pickArenaPos(pc.spawnMinDist||220,pc.spawnMaxDist||700);
+photocopiers.push({x:p.x,y:p.y,r:15,timer:pc.fuse||3,fuse:pc.fuse||3,exploded:false});
+}
+
+function explodePhotocopier(c){
+if(!c||c.exploded)return;
+const pc=BALANCE.environment.photocopier||{};
+c.exploded=true;sfx('boom');cam.shake=Math.max(cam.shake,8);
+burst(c.x,c.y,14,'#FF5252',130,5,.35);
+for(const e of enemies){if(e.hp>0&&dst(c,e)<=pc.radius)hurtE(e,pc.enemyDamage||95,true)}
+if(P&&dst(c,P)<=pc.radius)pHurt(pc.playerDamage||18);
+}
+
+function tickPhotocopiers(dt){
+const pc=BALANCE.environment.photocopier||{};
+photocopierSpawnT+=dt;
+if(photocopierSpawnT>=(pc.spawnInterval||999)){photocopierSpawnT=0;spawnPhotocopier()}
+for(let i=photocopiers.length-1;i>=0;i--){
+ const c=photocopiers[i];
+ if(c.exploded){photocopiers.splice(i,1);continue}
+ c.timer-=dt;
+ if(c.timer<=0)explodePhotocopier(c);
 }
 }
 

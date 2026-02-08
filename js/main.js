@@ -8,7 +8,7 @@ console.error('Runtime error in',phase,err);
 if(recoveredFromFatal)return;
 recoveredFromFatal=true;
 try{clearRunSave()}catch(e){}
-state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;waveSpawned=0;waveTarget=0;directorWaveTime=0;directorAmbientT=0;directorBudget=0;directorEvents=[];activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;objectiveRewardText='';objectiveRewardT=0;inputDir={x:0,y:0};joyAct=false;joyId=null;
+state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;photocopiers=[];photocopierSpawnT=0;waveSpawned=0;waveTarget=0;directorWaveTime=0;directorAmbientT=0;directorBudget=0;directorEvents=[];activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;objectiveRewardText='';objectiveRewardT=0;inputDir={x:0,y:0};joyAct=false;joyId=null;
 pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 }
 function loop(ts){

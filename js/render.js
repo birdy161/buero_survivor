@@ -69,6 +69,14 @@ arenaTools.forEach(t=>{
   if(!ready)dT(Math.ceil(t.cd)+'s',sx,sy+t.r+18,8,'#bbb');
  }
 });
+photocopiers.forEach(c=>{
+ const sx=c.x-cx,sy=c.y-cy,f=clamp(c.timer/c.fuse,0,1),blink=Math.sin(gameTime*20*(1+(1-f)*2))>0?1:.45,sh=(1-f)*3;
+ X.globalAlpha=.18+.2*blink;X.fillStyle='#FF5252';X.beginPath();X.arc(sx,sy,(BALANCE.environment.photocopier.radius||90)*.35,0,PI2);X.fill();X.globalAlpha=1;
+ X.fillStyle='#263238';X.beginPath();X.roundRect(sx-14+Math.sin(gameTime*25)*sh,sy-16+Math.cos(gameTime*17)*sh,28,32,6);X.fill();
+ X.strokeStyle='#FF5252';X.lineWidth=2;X.stroke();
+ dE('🖨️',sx+Math.sin(gameTime*25)*sh,sy+Math.cos(gameTime*17)*sh,15);
+ dT(Math.max(0,c.timer).toFixed(1)+'s',sx,sy+22,8,'#FFCDD2','center',true);
+});
 
 // Micro-objectives (ground telegraph)
 if(activeObjective){
@@ -117,33 +125,43 @@ pickups.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,b=Math.sin(gameTime*5+p.x)*3;
 
 // Enemies
 enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
+ const mm=e.mmBuff?2:1;
  const sp=e.spawnT>0&&e.spawnDur>0?clamp(1-e.spawnT/e.spawnDur,BALANCE.director.spawnPopMinScale,1):1;
  const sz=e.sz*sp,emoY=sy+sz*.06; // optical centering for emoji glyph metrics
- X.fillStyle='rgba(0,0,0,.2)';X.beginPath();X.ellipse(sx,sy+sz*.6,sz*.7,sz*.25,0,0,PI2);X.fill();
+ const rsz=sz*mm;
+ X.fillStyle='rgba(0,0,0,.2)';X.beginPath();X.ellipse(sx,sy+rsz*.6,rsz*.7,rsz*.25,0,0,PI2);X.fill();
  // Elite glow
- if(e.elite){X.globalAlpha=.2+Math.sin(gameTime*6)*.1;X.fillStyle='#FFD700';X.beginPath();X.arc(sx,sy,sz+6,0,PI2);X.fill();X.globalAlpha=1}
+ if(e.elite){X.globalAlpha=.2+Math.sin(gameTime*6)*.1;X.fillStyle='#FFD700';X.beginPath();X.arc(sx,sy,rsz+6,0,PI2);X.fill();X.globalAlpha=1}
  // Freeze visual
- if(e.freezeT>0){X.fillStyle='rgba(0,200,255,.3)';X.beginPath();X.arc(sx,sy,sz+4,0,PI2);X.fill()}
+ if(e.freezeT>0){X.fillStyle='rgba(0,200,255,.3)';X.beginPath();X.arc(sx,sy,rsz+4,0,PI2);X.fill()}
  // Pin visual
- if(e.pinT>0){X.fillStyle='rgba(255,50,50,.25)';X.beginPath();X.arc(sx,sy,sz+3,0,PI2);X.fill()}
+ if(e.pinT>0){X.fillStyle='rgba(255,50,50,.25)';X.beginPath();X.arc(sx,sy,rsz+3,0,PI2);X.fill()}
  // Body
- const eCol=e.flash>.01?'#fff':e.freezeT>0?'#88EEFF':e.slowT>0?'#88ccff':'#3a3a5a';
- X.fillStyle=eCol;X.beginPath();X.arc(sx,sy,sz,0,PI2);X.fill();
- X.globalAlpha=.18;X.fillStyle='#fff';X.beginPath();X.arc(sx-sz*.3,sy-sz*.35,sz*.45,0,PI2);X.fill();X.globalAlpha=1;
+ const eCol=e.mmBuff?'#E53935':e.flash>.01?'#fff':e.freezeT>0?'#88EEFF':e.slowT>0?'#88ccff':'#3a3a5a';
+ X.fillStyle=eCol;X.beginPath();X.arc(sx,sy,rsz,0,PI2);X.fill();
+ X.globalAlpha=.18;X.fillStyle='#fff';X.beginPath();X.arc(sx-rsz*.3,sy-rsz*.35,rsz*.45,0,PI2);X.fill();X.globalAlpha=1;
  X.strokeStyle=e.elite?'#FFD700':'rgba(255,255,255,.08)';X.lineWidth=e.elite?2:1;X.stroke();
- dE(e.emoji,sx,emoY,sz*1.3);
+ dE(e.emoji,sx,sy+rsz*.06,rsz*1.3);
+ if(e.special==='sniper'&&(e.snipeCharge||0)>0){
+  const a=e.snipeA||0,ln=2600,tx=sx+Math.cos(a)*ln,ty=sy+Math.sin(a)*ln;
+  X.strokeStyle='rgba(255,23,68,.75)';X.lineWidth=2.2;X.beginPath();X.moveTo(sx,sy);X.lineTo(tx,ty);X.stroke();
+ }
  // Infected marker
- if(e.infected){X.globalAlpha=.5+Math.sin(gameTime*8)*.3;dE('☣️',sx-sz*.7,sy-sz*.7,10);X.globalAlpha=1}
+ if(e.infected){X.globalAlpha=.5+Math.sin(gameTime*8)*.3;dE('☣️',sx-rsz*.7,sy-rsz*.7,10);X.globalAlpha=1}
+ if(e.special==='micromanager'){
+  const br=(BALANCE.director.specialEnemies?.micromanager?.buffRadius)||220;
+  X.globalAlpha=.09+Math.sin(gameTime*4)*.03;X.fillStyle='#EF5353';X.beginPath();X.arc(sx,sy,br,0,PI2);X.fill();X.globalAlpha=1;
+ }
  // HP bar
- if(e.hp<e.mhp){const bw=sz*2;dBar(sx-bw/2,sy-sz-9,bw,4,e.hp/e.mhp,e.isBoss?'#FF5252':'#66BB6A')}
- if(e.isBoss)dE('👑',sx,sy-sz-16,18);
+ if(e.hp<e.mhp){const bw=rsz*2;dBar(sx-bw/2,sy-rsz-9,bw,4,e.hp/e.mhp,e.isBoss?'#FF5252':'#66BB6A')}
+ if(e.isBoss)dE('👑',sx,sy-rsz-16,18);
  // Status indicators (synergy readability)
  const sts=[];
  if(e.freezeT>0)sts.push('❄️');
  if(e.wetT>0)sts.push('💧');
  if(e.oilT>0)sts.push('🛢️');
  if(e.burnT>0)sts.push('🔥');
- if(sts.length)dT(sts.join(' '),sx,sy-sz-21,9,'#B3E5FC','center',true);
+ if(sts.length)dT(sts.join(' '),sx,sy-rsz-21,9,'#B3E5FC','center',true);
  // Aura
  if(e.aura){X.globalAlpha=.06+Math.sin(gameTime*3)*.03;X.fillStyle='#FF5722';X.beginPath();X.arc(sx,sy,e.aura,0,PI2);X.fill();X.globalAlpha=1}
 });

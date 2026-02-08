@@ -88,6 +88,7 @@ if(hasTemp('staplerfury')&&near){
 
 function hurtE(e,dmg,noCrit){
 if(!e||e.hp<=0||!P)return;
+if(e.mmBuff){fTxt(e.x,e.y-e.sz-14,'IMMUN','#EF5350',11);return}
 let cr=!noCrit&&Math.random()<P.crit,fd=cr?dmg*2:dmg;
 if(hasTemp('vpn')){
  if(tempData.vpnFirst)cr=true;

@@ -39,7 +39,25 @@ const BALANCE={
    weakWave10:.6,
    fastWave1:0,
    fastWave10:.3
+  },
+  specialEnemies:{
+   micromanagerRate:0.06,
+   sniperRate:0.04,
+   maxMicromanagerAlive:2,
+   maxSniperAlive:2,
+   micromanager:{
+    budgetRole:'fast',
+    buffRadius:220
+   },
+   sniper:{
+    budgetRole:'fast',
+    chargeTime:2,
+    cooldown:4,
+    projectileSpeed:560,
+   minRange:260,
+   maxRange:520
   }
+ },
  },
  waves:{
   breakDuration:6,
@@ -147,6 +165,18 @@ const BALANCE={
     healPercent:0.12,
     enemySpawnOnUse:2
    }
+  }
+ },
+ environment:{
+  photocopier:{
+   spawnInterval:18,
+   maxActive:3,
+   spawnMinDist:220,
+   spawnMaxDist:700,
+   fuse:3,
+   radius:180,
+   enemyDamage:95,
+   playerDamage:18
   }
  }
 };

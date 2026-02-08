@@ -64,8 +64,17 @@ if(waveT<=0){
  const ai=directorAmbientInterval(wave);
  if(directorAmbientT>=ai){
   directorAmbientT=0;
-  const role=chooseRoleByMix(wave);
-  if(spendDirector(role))spawnE({role});
+  const sp=rollAmbientSpecial();
+  if(sp==='micromanager'){
+   const role=(BALANCE.director.specialEnemies?.micromanager?.budgetRole)||'fast';
+   if(spendDirector(role))spawnE({special:'micromanager'});
+  }else if(sp==='sniper'){
+   const role=(BALANCE.director.specialEnemies?.sniper?.budgetRole)||'fast';
+   if(spendDirector(role))spawnE({special:'sniper',edgeSpawn:true});
+  }else{
+   const role=chooseRoleByMix(wave);
+   if(spendDirector(role))spawnE({role});
+  }
  }
  for(const ev of directorEvents){if(!ev.fired&&directorWaveTime>=ev.time)triggerDirectorEvent(ev)}
  const minCost=Math.min(roleCost('weak'),roleCost('fast'),roleCost('tank'));
@@ -81,6 +90,8 @@ if(waveT<=0){
 }
 tickObjectives(dt);
 tickArenaEvents(dt);
+tickPhotocopiers(dt);
+applyMicromanagerBuffs();
 
 // Fire weapons
 P.weps.forEach(w=>{w.timer=(w.timer||0)-dt;
@@ -150,6 +161,7 @@ for(let i=enemies.length-1;i>=0;i--){
 
  let ms=e.spd;
  if(objectivePenaltyT>0)ms*=BALANCE.objectives.penaltyEnemySpeedMult;
+ const isSniper=e.special==='sniper';
  if(e.freezeT>0){ms=0;e.freezeT-=dt;}
  else if(e.pinT>0){ms=0;e.pinT-=dt;}
  else if(e.slowT>0){ms*=.3;e.slowT-=dt;}
@@ -164,7 +176,7 @@ for(let i=enemies.length-1;i>=0;i--){
   e.x=clamp(e.x,20,worldW-20);e.y=clamp(e.y,20,worldH-20);
  }
 
- if(!rushing&&e.charge&&!e.isBoss){
+ if(!rushing&&!isSniper&&e.charge&&!e.isBoss){
   e.chargeCD=(e.chargeCD||0)+dt;
   if(e.chargeCD>3&&ed<250&&ed>60&&ms>0){
    e.chargeT=.4;e.chargeCD=0;e.chA=ea;
@@ -172,9 +184,25 @@ for(let i=enemies.length-1;i>=0;i--){
   if(e.chargeT>0){e.chargeT-=dt;ms=e.spd*4;const ca=e.chA||ea;
    e.x+=Math.cos(ca)*ms*dt;e.y+=Math.sin(ca)*ms*dt}
   else{e.x+=Math.cos(ea)*ms*dt;e.y+=Math.sin(ea)*ms*dt}
- }else if(!rushing&&ms>0){
+ }else if(!rushing&&!isSniper&&ms>0){
   const ma=e.fearT>0?ea+PI:ea;
   e.x+=Math.cos(ma)*ms*dt;e.y+=Math.sin(ma)*ms*dt
+ }
+ if(isSniper&&ms>0){
+  const sn=BALANCE.director.specialEnemies.sniper,sd=dst(e,P);
+  if(sd<sn.minRange){e.x-=Math.cos(ea)*ms*dt;e.y-=Math.sin(ea)*ms*dt}
+  else if(sd>sn.maxRange){e.x+=Math.cos(ea)*ms*.5*dt;e.y+=Math.sin(ea)*ms*.5*dt}
+  e.x=clamp(e.x,20,worldW-20);e.y=clamp(e.y,20,worldH-20);
+  if((e.snipeCharge||0)>0){
+   e.snipeCharge-=dt;
+   if(e.snipeCharge<=0){
+    const aa=e.snipeA||ea;
+    projs.push({x:e.x,y:e.y,vx:Math.cos(aa)*sn.projectileSpeed,vy:Math.sin(aa)*sn.projectileSpeed,dmg:e.dmg,col:'#FF1744',sz:6,life:2,own:'e',mech:'',pierce:0,aoe:0,trail:[]});
+   }
+  }else{
+   e.snipeCd=(e.snipeCd||0)+dt;
+   if(e.snipeCd>=sn.cooldown){e.snipeCd=0;e.snipeCharge=sn.chargeTime;e.snipeA=ea}
+  }
  }
  for(const t of arenaTools){
   if(t.type==='barrel'&&!t.exploded&&dst(e,t)<e.sz+t.r){explodeBarrel(t);break}
@@ -187,7 +215,7 @@ for(let i=enemies.length-1;i>=0;i--){
   }else pHurt(e.dmg);
  }
 
- if(e.ranged&&ms>0){e.atkT=(e.atkT||0)+dt;if(e.atkT>1.2){e.atkT=0;
+ if(e.ranged&&ms>0&&!isSniper){e.atkT=(e.atkT||0)+dt;if(e.atkT>1.2){e.atkT=0;
   projs.push({x:e.x,y:e.y,vx:Math.cos(ea)*200,vy:Math.sin(ea)*200,dmg:e.dmg,col:'#fff',sz:4,life:2,own:'e',mech:'',pierce:0,aoe:0,trail:[]})}}
 
  if(e.aura&&ed<e.aura&&ms>0)pHurt(Math.ceil(e.dmg*.4*dt));
