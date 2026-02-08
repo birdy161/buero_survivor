@@ -32,6 +32,112 @@ bt.elite=false;bt.infected=false;bt.chargeT=0;bt.chargeCD=0;bt.uid=Math.random()
 bossRef=bt;enemies.push(bt);sfx('boss');
 }
 
+function waveEnemyTarget(wv){
+const wc=BALANCE.waves;
+return Math.max(1,Math.floor(wc.baseEnemyCount+wv*wc.perWaveEnemyCount));
+}
+
+function beginWave(wv){
+if(!P)return;
+wave=wv;
+waveSpawned=0;
+waveTarget=waveEnemyTarget(wv);
+spawnT=0;
+if(wave%5===0)spawnBoss();
+}
+
+function pickArenaPos(minDist,maxDist){
+if(!P)return{x:worldW/2,y:worldH/2};
+for(let i=0;i<24;i++){
+ const a=rng(0,PI2),d=rng(minDist,maxDist);
+ const x=clamp(P.x+Math.cos(a)*d,60,worldW-60),y=clamp(P.y+Math.sin(a)*d,60,worldH-60);
+ if(dst({x,y},P)>=minDist)return{x,y};
+}
+return{x:clamp(P.x+rng(-maxDist,maxDist),60,worldW-60),y:clamp(P.y+rng(-maxDist,maxDist),60,worldH-60)};
+}
+
+function spawnArenaHazard(){
+const hc=BALANCE.arena.hazards,zc=hc.zapZone;
+if(!P||arenaHazards.length>=hc.maxActive)return;
+const p=pickArenaPos(hc.spawnMinDist,hc.spawnMaxDist);
+arenaHazards.push({
+ id:Math.random(),type:'zap_zone',x:p.x,y:p.y,r:zc.radius,state:'idle',t:0,life:zc.life,
+ interval:zc.interval,warning:zc.warning,activeDur:zc.activeDuration,cooldown:zc.cooldown,damageE:zc.enemyDamage,damageP:zc.playerDamage,slowE:zc.enemySlow
+});
+}
+
+function spawnArenaTool(){
+const tc=BALANCE.arena.tools,bc=tc.barrel,cc=tc.coffee;
+if(!P||arenaTools.length>=tc.maxActive)return;
+const p=pickArenaPos(tc.spawnMinDist,tc.spawnMaxDist);
+if(Math.random()<tc.barrelChance)arenaTools.push({id:Math.random(),type:'barrel',x:p.x,y:p.y,r:bc.radius,hp:bc.hp,maxHp:bc.hp,exploded:false});
+else arenaTools.push({id:Math.random(),type:'coffee',x:p.x,y:p.y,r:cc.radius,cd:0,maxCd:cc.cooldown});
+}
+
+function explodeBarrel(b){
+if(!b||b.exploded)return;
+const bc=BALANCE.arena.tools.barrel;
+b.exploded=true;cam.shake=Math.max(cam.shake,6);sfx('boom');
+burst(b.x,b.y,16,'#FF7043',140,6,.45);
+for(const e of enemies){
+ if(e.hp<=0)continue;
+ const d=dst(b,e);
+ if(d<=bc.explosionRadius){
+  hurtE(e,bc.enemyDamage,true);
+  const a=ang(b,e),k=(1-d/bc.explosionRadius)*bc.knockback;
+  e.x+=Math.cos(a)*k;e.y+=Math.sin(a)*k;
+ }
+}
+if(P&&dst(b,P)<=bc.explosionRadius)pHurt(bc.playerDamage);
+for(const t of arenaTools){if(t!==b&&t.type==='barrel'&&!t.exploded&&dst(b,t)<=bc.chainRadius)explodeBarrel(t)}
+}
+
+function damageBarrel(b,dmg){
+if(!b||b.exploded)return;
+b.hp-=Math.max(1,Math.floor(dmg||1));
+if(b.hp<=0)explodeBarrel(b);
+}
+
+function pulseZapZone(h){
+if(!h||!P)return;
+burst(h.x,h.y,12,'#00E5FF',h.r*1.3,4,.35);sfx('freeze');
+for(const e of enemies){
+ if(e.hp<=0)continue;
+ if(dst(h,e)<=h.r){hurtE(e,h.damageE,true);e.slowT=Math.max(e.slowT,h.slowE||0)}
+}
+if(dst(h,P)<=h.r)pHurt(h.damageP);
+}
+
+function tickArenaEvents(dt){
+if(!P)return;
+arenaHazSpawnT+=dt;
+if(arenaHazSpawnT>=BALANCE.arena.hazards.spawnInterval){arenaHazSpawnT=0;spawnArenaHazard()}
+arenaToolSpawnT+=dt;
+if(arenaToolSpawnT>=BALANCE.arena.tools.spawnInterval){arenaToolSpawnT=0;spawnArenaTool()}
+
+for(let i=arenaHazards.length-1;i>=0;i--){
+ const h=arenaHazards[i];h.life-=dt;if(h.life<=0){arenaHazards.splice(i,1);continue}
+ h.t+=dt;
+ if(h.state==='idle'&&h.t>=h.interval){h.state='warning';h.t=0}
+ else if(h.state==='warning'&&h.t>=h.warning){h.state='active';h.t=0;pulseZapZone(h)}
+ else if(h.state==='active'&&h.t>=h.activeDur){h.state='cooldown';h.t=0}
+ else if(h.state==='cooldown'&&h.t>=h.cooldown){h.state='idle';h.t=0}
+}
+for(let i=arenaTools.length-1;i>=0;i--){
+ const t=arenaTools[i];
+ if(t.type==='barrel'&&t.exploded){arenaTools.splice(i,1);continue}
+ if(t.type==='coffee'){
+  if(t.cd>0)t.cd=Math.max(0,t.cd-dt);
+  if(t.cd<=0&&dst(t,P)<=t.r+P.sz){
+   const heal=Math.max(1,Math.floor(P.mhp*BALANCE.arena.tools.coffee.healPercent));
+   P.hp=Math.min(P.mhp,P.hp+heal);t.cd=t.maxCd;
+   fTxt(P.x,P.y-24,'☕ +'+heal,'#66BB6A',15);sfx('power');
+   if(waveT<=0)for(let i=0;i<BALANCE.arena.tools.coffee.enemySpawnOnUse;i++)spawnE();
+  }
+ }
+}
+}
+
 function tickParticles(dt){
 for(let i=parts.length-1;i>=0;i--){const p=parts[i];
  if(p.type==='t'&&p.txtFx==='dmg'){
@@ -86,15 +192,28 @@ tickTemps(dt);
 // Combo timer
 if(comboT>0){comboT-=dt*(hasTemp('poster')?.55:1);if(comboT<=0){combo=0;lastMS=0}}
 
-// Waves — 25s per wave (faster!)
-waveT+=dt;if(waveT>=25){waveT=0;wave++;sfx('lvl');if(wave%5===0)spawnBoss()}
+if(waveTarget<=0&&waveT<=0)beginWave(Math.max(1,wave));
+if(waveT>0){
+ waveT=Math.max(0,waveT-dt);
+ if(waveT<=0){sfx('lvl');beginWave(wave+1)}
+}
 
-// Spawn — MUCH faster spawning!
-const sr=Math.max(.12,1.4-wave*.12); // Gets fast quick!
-spawnT+=dt;
-if(spawnT>=sr&&enemies.length<50+wave*5){spawnT=0;
- const cnt=Math.min(1+Math.floor(wave*.5),6); // More enemies per spawn
- for(let i=0;i<cnt;i++)spawnE()}
+if(waveT<=0){
+ const wc=BALANCE.waves;
+ const sr=Math.max(wc.spawnIntervalMin,wc.spawnIntervalBase-wave*wc.spawnIntervalWaveScale);
+ spawnT+=dt;
+ if(spawnT>=sr&&enemies.length<wc.maxAliveBase+wave*wc.maxAlivePerWave&&waveSpawned<waveTarget){
+  spawnT=0;
+  const batch=Math.min(wc.spawnBatchBase+Math.floor(wave*wc.spawnBatchWaveScale),wc.spawnBatchMax);
+  const cnt=Math.min(batch,waveTarget-waveSpawned);
+  for(let i=0;i<cnt;i++){spawnE();waveSpawned++}
+ }
+ if(waveSpawned>=waveTarget&&enemies.length===0&&!bossRef){
+  waveTarget=0;waveT=BALANCE.waves.breakDuration;
+  fTxt(P.x,P.y-40,'☕ Kurze Pause','#80CBC4',16);
+ }
+}
+tickArenaEvents(dt);
 
 // Fire weapons
 P.weps.forEach(w=>{w.timer=(w.timer||0)-dt;
@@ -111,6 +230,16 @@ for(let i=projs.length-1;i>=0;i--){
   if(dst(p,P)<25){projs.splice(i,1);continue}}}
  p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
  if(p.life<=0){projs.splice(i,1);continue}
+ let hitTool=false;
+ for(const t of arenaTools){
+  if(t.type!=='barrel'||t.exploded)continue;
+  if(dst(p,t)<t.r+p.sz){
+   damageBarrel(t,p.dmg);
+   if(p.mech!=='boomkb'){projs.splice(i,1);hitTool=true}
+   break;
+  }
+ }
+ if(hitTool)continue;
  if(p.own==='p'){let rm=false;
   for(let j=enemies.length-1;j>=0;j--){const e=enemies[j];if(e.hp<=0)continue;
    if(dst(p,e)<e.sz+p.sz){
@@ -167,6 +296,9 @@ const ea=ang(e,P),ed=dst(e,P);
   const ma=e.fearT>0?ea+PI:ea;
   e.x+=Math.cos(ma)*ms*dt;e.y+=Math.sin(ma)*ms*dt
  }
+ for(const t of arenaTools){
+  if(t.type==='barrel'&&!t.exploded&&dst(e,t)<e.sz+t.r){explodeBarrel(t);break}
+ }
 
  // Contact damage
  if(ed<P.sz+e.sz){
@@ -206,7 +338,10 @@ const ea=ang(e,P),ed=dst(e,P);
 for(let i=pickups.length-1;i>=0;i--){
  const p=pickups[i];p.life-=dt;if(p.life<=0){pickups.splice(i,1);continue}
  const d=dst(p,P);
- if(d<P.magnet){const a=ang(p,P),s=Math.max(380,760-d*4.2);p.x+=Math.cos(a)*s*dt;p.y+=Math.sin(a)*s*dt}
+ if(d<P.magnet){
+  const a=ang(p,P),mc=BALANCE.magnet,s=Math.max(mc.pullMinSpeed,mc.pullBaseSpeed-d*mc.pullDistanceFactor);
+  p.x+=Math.cos(a)*s*dt;p.y+=Math.sin(a)*s*dt
+ }
  if(d<22){
   if(p.type==='xp'){addXP(p.val);sfx('xp')}
   else if(p.type==='coin'){coins+=p.val;triggerCoinHudPulse();sfx('coin')}

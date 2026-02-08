@@ -38,6 +38,38 @@ const gs=80;X.strokeStyle='rgba(164,182,212,.06)';X.lineWidth=1;
 for(let gx=-(cx%gs);gx<VW+gs;gx+=gs){X.beginPath();X.moveTo(gx,0);X.lineTo(gx,VH);X.stroke()}
 for(let gy=-(cy%gs);gy<VH+gs;gy+=gs){X.beginPath();X.moveTo(0,gy);X.lineTo(VW,gy);X.stroke()}
 
+// Arena events (hazards + tools)
+arenaHazards.forEach(h=>{
+ const sx=h.x-cx,sy=h.y-cy;
+ let sc='rgba(180,180,180,.2)',fc='rgba(180,180,180,.08)';
+ if(h.state==='warning'){
+  const blink=Math.sin(gameTime*16)>0?1:.45;
+  sc=`rgba(255,214,80,${.35*blink})`;fc=`rgba(255,214,80,${.08*blink})`;
+ }else if(h.state==='active'){sc='rgba(0,229,255,.85)';fc='rgba(0,229,255,.2)'}
+ else if(h.state==='cooldown'){sc='rgba(120,160,180,.3)';fc='rgba(120,160,180,.08)'}
+ X.fillStyle=fc;X.beginPath();X.arc(sx,sy,h.r,0,PI2);X.fill();
+ X.strokeStyle=sc;X.lineWidth=2.4;X.beginPath();X.arc(sx,sy,h.r,0,PI2);X.stroke();
+ if(h.state==='warning')dT('⚠️',sx,sy,13,'#FFD740');
+ if(h.state==='active')dT('⚡',sx,sy,15,'#00E5FF');
+});
+arenaTools.forEach(t=>{
+ const sx=t.x-cx,sy=t.y-cy;
+ if(t.type==='barrel'){
+  X.fillStyle='#8D4E2A';X.beginPath();X.arc(sx,sy,t.r,0,PI2);X.fill();
+  X.strokeStyle='#D7A26A';X.lineWidth=2;X.stroke();
+  const hp=(t.hp||0)/(t.maxHp||1);
+  if(hp<.67){X.strokeStyle='rgba(255,255,255,.5)';X.lineWidth=1.2;X.beginPath();X.moveTo(sx-4,sy-2);X.lineTo(sx+3,sy+4);X.stroke()}
+  if(hp<.34){X.beginPath();X.moveTo(sx+2,sy-5);X.lineTo(sx-5,sy+1);X.stroke()}
+  dE('🛢️',sx,sy,14);
+ }else if(t.type==='coffee'){
+  const ready=t.cd<=0,col=ready?'#66BB6A':'#8a8f98';
+  X.fillStyle='rgba(0,0,0,.28)';X.beginPath();X.arc(sx,sy,t.r+10,0,PI2);X.fill();
+  X.strokeStyle=col;X.lineWidth=2.2;X.beginPath();X.arc(sx,sy,t.r+10,0,PI2);X.stroke();
+  dE('☕',sx,sy,17);
+  if(!ready)dT(Math.ceil(t.cd)+'s',sx,sy+t.r+18,8,'#bbb');
+ }
+});
+
 // World border (visible when reaching map limits)
 const wx=-cx,wy=-cy;
 X.strokeStyle='rgba(255,215,64,.55)';X.lineWidth=4;
@@ -171,7 +203,10 @@ dT('LV '+P.lv,VW/2,19,12,'#FFD740');
 // Wave name
 const wn=WNAMES[Math.min(wave-1,WNAMES.length-1)]||('Welle '+wave);
 dT('⏱ '+fmtT(gameTime),12,38,11,'rgba(255,255,255,.6)','left',true);
-dT('🌊 '+wn,VW/2,38,9,'rgba(255,200,100,.6)','center',true);
+if(waveT>0){
+ dT('☕ Pause: '+Math.ceil(waveT)+'s',VW/2,38,10,'#80CBC4','center',true);
+ dT('Nächste Welle: '+(wave+1),VW/2,50,8,'rgba(255,200,100,.55)','center',true);
+}else dT('🌊 '+wn,VW/2,38,9,'rgba(255,200,100,.6)','center',true);
 dT('💀 '+kills,VW-12,15,14,'#fff','right',true);
 X.save();
 X.translate(VW-12,35);

@@ -180,7 +180,7 @@ const UPG=[
 {t:'s',k:'atk',v:.22,emoji:'⚡',name:'Energy Drink',desc:'+22% Feuerrate',r:'rare'},
 {t:'s',k:'arm',v:3,emoji:'🦺',name:'Schutzhelm',desc:'+3 Rüstung',r:'common'},
 {t:'s',k:'reg',v:1.5,emoji:'🥗',name:'Gesundes Essen',desc:'+1.5 HP/Sek',r:'rare'},
-{t:'s',k:'mag',v:25,emoji:'🧲',name:'Praktikant',desc:'Magnet+',r:'common'},
+{t:'s',k:'mag',v:BALANCE.magnet.levelUpBonus,emoji:'🧲',name:'Praktikant',desc:'Magnet+',r:'common'},
 {t:'s',k:'crt',v:.08,emoji:'💥',name:'Motivations-Push',desc:'+8% Krit',r:'rare'},
 {t:'s',k:'prj',v:1,emoji:'🎆',name:'Beidhändig',desc:'+1 Projektil!',r:'epic'},
 {t:'i',id:'heal',emoji:'💖',name:'Wellness-Tag',desc:'Volle Heilung!',r:'common'},
@@ -234,6 +234,8 @@ parts.push({
 let state='menu',P=null; // P = player
 let enemies=[],projs=[],pickups=[],gfx=[]; // gfx = ground effects (puddles)
 let gameTime=0,kills=0,coins=0,wave=1,waveT=0,spawnT=0;
+let waveSpawned=0,waveTarget=0;
+let arenaHazards=[],arenaTools=[],arenaHazSpawnT=0,arenaToolSpawnT=0;
 let combo=0,comboT=0,lastMS=0,comboSpdB=0,comboShield=0;
 let bossRef=null,specCD=0,worldW=3000,worldH=3000,menuA=0;
 let cam={x:0,y:0,shake:0};
