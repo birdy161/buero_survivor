@@ -13,12 +13,13 @@ w.shotCount=(w.shotCount||0)+1;
 // === CHAIN LIGHTNING (Kabelsalat) ===
 if(w.mech==='chain'){
  if(!near)return;sfx('shoot');
- let tgt=near,ch=[tgt];hurtE(tgt,dmg);
+ let tgt=near,ch=[tgt],cpr={mech:'chain',dmg,own:'p'};hurtE(tgt,dmg);trySynergy(cpr,tgt);
  for(let c=0;c<4;c++){let nt=null,nd2=160;
   for(const e of enemies){if(ch.includes(e)||e.hp<=0)continue;const d2=dst(tgt,e);if(d2<nd2){nd2=d2;nt=e}}
   if(!nt)break;
   for(let j=0;j<6;j++){const t2=j/6;addP(lerp(tgt.x,nt.x,t2)+rng(-10,10),lerp(tgt.y,nt.y,t2)+rng(-10,10),0,0,.12,w.col,3)}
-  hurtE(nt,Math.floor(dmg*.8));ch.push(nt);tgt=nt}
+  const cd=Math.floor(dmg*.8);
+  hurtE(nt,cd);cpr.dmg=cd;trySynergy(cpr,nt);ch.push(nt);tgt=nt}
  return;
 }
 
@@ -96,10 +97,10 @@ switch(pr.mech){
   break;}
  case'grease':{ // Schnitzel: grease puddle
   gfx.push({x:e.x,y:e.y,r:35,dps:12,dur:3,slow:.35,col:'#E65100',t:0});
-  e.slowT=Math.max(e.slowT,.8);break;}
+  e.slowT=Math.max(e.slowT,.8);e.oilT=Math.max(e.oilT||0,3);break;}
  case'wetfloor':{ // Mopp: knockback + wet floor
   const ka=ang(P,e);e.x+=Math.cos(ka)*35;e.y+=Math.sin(ka)*35;
-  gfx.push({x:e.x,y:e.y,r:28,dps:3,dur:4,slow:.3,col:'#64B5F6',t:0});break;}
+  gfx.push({x:e.x,y:e.y,r:28,dps:3,dur:4,slow:.3,col:'#64B5F6',t:0});e.wetT=Math.max(e.wetT||0,2);break;}
  case'infect':{ // Spritze: infect enemy
   e.infected=true;break;}
  case'goldrush':{ // Megafon: Bonus-Münze bei Treffer
@@ -108,7 +109,7 @@ switch(pr.mech){
  case'pin':{ // Tacker: pin in place
   e.pinT=Math.max(e.pinT,.5);break;}
  case'burn':{ // Heißer Kaffee: burning puddle
-  gfx.push({x:e.x,y:e.y,r:30,dps:18,dur:2.5,slow:.65,col:'#4E342E',t:0});break;}
+  gfx.push({x:e.x,y:e.y,r:30,dps:18,dur:2.5,slow:.65,col:'#4E342E',t:0});e.burnT=Math.max(e.burnT||0,2);break;}
  case'freeze':{ // Kalter Kaffee: slow → double hit = freeze
   if(e.slowT>0){e.freezeT=2;e.slowT=0;fTxt(e.x,e.y-20,'❄️ FROZEN!','#00E5FF',16);
    burst(e.x,e.y,8,'#29B6F6',60,4,.3);sfx('freeze')}
@@ -120,6 +121,33 @@ switch(pr.mech){
    if(dst(e,e2)<e.sz+e2.sz+10){hurtE(e2,Math.floor(pr.dmg*.6),true);
     fTxt(e2.x,e2.y-15,'💥CRASH!','#FFA726',14);burst(e2.x,e2.y,4,'#FFA726',50,3,.2)}}
   break;}
+}
+}
+
+function trySynergy(pr,e){
+if(!P||!pr||!e||e.hp<=0||(e.synCD||0)>0)return;
+if(pr.mech==='burn'&&(e.oilT||0)>0){
+ e.oilT=0;e.synCD=.5;
+ gfx.push({x:e.x,y:e.y,r:45,dps:24,dur:4,slow:.5,col:'#FF6D00',t:0});
+ fTxt(e.x,e.y-20,'🔥 IGNITION!','#FF6D00',16);
+ burst(e.x,e.y,10,'#FF6D00',110,5,.35);
+ return;
+}
+if(pr.mech==='chain'&&(e.wetT||0)>0){
+ e.wetT=0;e.synCD=.5;
+ const targets=enemies.filter(t=>t!==e&&t.hp>0&&dst(e,t)<180).sort((a,b)=>dst(e,a)-dst(e,b)).slice(0,2);
+ for(const t of targets){
+  hurtE(t,Math.floor(pr.dmg*.7),true);
+  for(let j=0;j<6;j++){const tt=j/6;addP(lerp(e.x,t.x,tt)+rng(-8,8),lerp(e.y,t.y,tt)+rng(-8,8),0,0,.12,'#00E5FF',3)}
+ }
+ fTxt(e.x,e.y-20,'⚡ OVERLOAD!','#00E5FF',16);
+ return;
+}
+if((e.freezeT||0)>0&&pr.own==='p'&&pr.dmg>=P.bdmg*1.2){
+ e.freezeT=0;e.synCD=.5;
+ for(const t of enemies){if(t!==e&&t.hp>0&&dst(e,t)<80)hurtE(t,Math.floor(pr.dmg*.8),true)}
+ burst(e.x,e.y,12,'#B3E5FC',95,5,.35);
+ fTxt(e.x,e.y-20,'❄️ SHATTER!','#B3E5FC',16);
 }
 }
 

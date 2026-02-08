@@ -87,6 +87,13 @@ enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
  // HP bar
  if(e.hp<e.mhp){const bw=e.sz*2;dBar(sx-bw/2,sy-e.sz-9,bw,4,e.hp/e.mhp,e.isBoss?'#FF5252':'#66BB6A')}
  if(e.isBoss)dE('👑',sx,sy-e.sz-16,18);
+ // Status indicators (synergy readability)
+ const sts=[];
+ if(e.freezeT>0)sts.push('❄️');
+ if(e.wetT>0)sts.push('💧');
+ if(e.oilT>0)sts.push('🛢️');
+ if(e.burnT>0)sts.push('🔥');
+ if(sts.length)dT(sts.join(' '),sx,sy-e.sz-21,9,'#B3E5FC','center',true);
  // Aura
  if(e.aura){X.globalAlpha=.06+Math.sin(gameTime*3)*.03;X.fillStyle='#FF5722';X.beginPath();X.arc(sx,sy,e.aura,0,PI2);X.fill();X.globalAlpha=1}
 });

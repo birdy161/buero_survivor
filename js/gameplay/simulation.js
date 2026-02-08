@@ -114,7 +114,7 @@ for(let i=projs.length-1;i>=0;i--){
  if(p.own==='p'){let rm=false;
   for(let j=enemies.length-1;j>=0;j--){const e=enemies[j];if(e.hp<=0)continue;
    if(dst(p,e)<e.sz+p.sz){
-    hurtE(e,p.dmg);onHit(p,e); // Apply weapon mechanic!
+    hurtE(e,p.dmg);onHit(p,e);trySynergy(p,e); // Apply weapon mechanic + synergies
     // AOE damage
     if(p.aoe>0){for(const e2 of enemies){if(e2!==e&&e2.hp>0&&dst(p,e2)<p.aoe)hurtE(e2,Math.floor(p.dmg*.5),true)}
      burst(p.x,p.y,6,p.col,p.aoe,4,.3)}
@@ -139,6 +139,10 @@ for(let i=gfx.length-1;i>=0;i--){
 for(let i=enemies.length-1;i>=0;i--){
  const e=enemies[i];if(e.hp<=0){enemies.splice(i,1);continue}
  if(e.flash>0)e.flash-=dt;
+ if(e.wetT>0)e.wetT=Math.max(0,e.wetT-dt);
+ if(e.oilT>0)e.oilT=Math.max(0,e.oilT-dt);
+ if(e.burnT>0)e.burnT=Math.max(0,e.burnT-dt);
+ if(e.synCD>0)e.synCD=Math.max(0,e.synCD-dt);
 
  // Movement (with freeze/pin/slow)
  let ms=e.spd;
