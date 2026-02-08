@@ -50,7 +50,7 @@ const BALANCE={
   xpPickupLifetime:15,
   coinPickupLifetime:15,
   enemyXpMultiplier:1,
-  enemyCoinChance:0.3,
+  enemyCoinChance:0.2,
   enemyCoinValueMultiplier:1,
   enemyHpDropChance:0.03,
   goldrushCoinHitChance:0.25,
