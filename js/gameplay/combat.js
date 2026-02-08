@@ -43,7 +43,7 @@ for(let s=0;s<shots;s++){
  const a=ang(P,near)+spread;
  const pr={x:P.x,y:P.y,vx:Math.cos(a)*(w.ps||300),vy:Math.sin(a)*(w.ps||300),
   dmg,col:w.col,sz:5,life:1.5,own:'p',mech:w.mech,wid:w.id,
-  pierce:0,retT:0,aoe:0,sc:w.shotCount};
+  pierce:0,retT:0,aoe:0,sc:w.shotCount,trail:[]};
 
  // Weapon-specific projectile properties
  switch(w.mech){
@@ -64,7 +64,7 @@ for(let s=0;s<shots;s++){
 if(hasTemp('staplerfury')&&near){
  for(let i=0;i<2;i++){
   const a=ang(P,near)+rng(-.28,.28);
-  projs.push({x:P.x,y:P.y,vx:Math.cos(a)*420,vy:Math.sin(a)*420,dmg:Math.floor(dmg*.45),col:'#EF5350',sz:3,life:.7,own:'p',mech:'pin',wid:'stapler',pierce:0,retT:0,aoe:0});
+  projs.push({x:P.x,y:P.y,vx:Math.cos(a)*420,vy:Math.sin(a)*420,dmg:Math.floor(dmg*.45),col:'#EF5350',sz:3,life:.7,own:'p',mech:'pin',wid:'stapler',pierce:0,retT:0,aoe:0,trail:[]});
  }
 }
 }

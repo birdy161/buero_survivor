@@ -93,6 +93,15 @@ enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
 
 // Projectiles
 projs.forEach(p=>{const sx=p.x-cx,sy=p.y-cy;
+ const tr=Array.isArray(p.trail)?p.trail:[];
+ for(let i=0;i<tr.length;i++){
+  const tp=tr[i],tx=tp.x-cx,ty=tp.y-cy;
+  const t=(i+1)/(tr.length+1);
+  X.globalAlpha=.08+.2*t;
+  X.fillStyle=p.own==='e'?'#FF6A63':(p.col||'#fff');
+  X.beginPath();X.arc(tx,ty,Math.max(1.2,p.sz*(.3+.45*t)),0,PI2);X.fill();
+ }
+ X.globalAlpha=1;
  if(p.own==='e'){
   const s=p.sz+1.5,col='#FF3B30';
   X.fillStyle=col;X.beginPath();

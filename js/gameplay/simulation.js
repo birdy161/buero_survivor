@@ -103,6 +103,9 @@ P.weps.forEach(w=>{w.timer=(w.timer||0)-dt;
 // Projectiles
 for(let i=projs.length-1;i>=0;i--){
  const p=projs[i];
+ if(!Array.isArray(p.trail))p.trail=[];
+ p.trail.push({x:p.x,y:p.y});
+ if(p.trail.length>5)p.trail.shift();
  // Boomerang return
  if(p.mech==='boomkb'){p.retT+=dt;if(p.retT>.4){const a=ang(p,P);p.vx=Math.cos(a)*350;p.vy=Math.sin(a)*350;
   if(dst(p,P)<25){projs.splice(i,1);continue}}}
@@ -171,7 +174,7 @@ const ea=ang(e,P),ed=dst(e,P);
 
  // Ranged (Drucker)
  if(e.ranged&&ms>0){e.atkT=(e.atkT||0)+dt;if(e.atkT>1.2){e.atkT=0;
-  projs.push({x:e.x,y:e.y,vx:Math.cos(ea)*200,vy:Math.sin(ea)*200,dmg:e.dmg,col:'#fff',sz:4,life:2,own:'e',mech:'',pierce:0,aoe:0})}}
+  projs.push({x:e.x,y:e.y,vx:Math.cos(ea)*200,vy:Math.sin(ea)*200,dmg:e.dmg,col:'#fff',sz:4,life:2,own:'e',mech:'',pierce:0,aoe:0,trail:[]})}}
 
  // Aura (PPT, Zoom)
  if(e.aura&&ed<e.aura&&ms>0)pHurt(Math.ceil(e.dmg*.4*dt));
@@ -182,14 +185,14 @@ const ea=ang(e,P),ed=dst(e,P);
    const r=Math.random();
    if(r<.35){// Burst shot
     for(let f=0;f<8;f++){const fa=f*(PI2/8);
-     projs.push({x:e.x,y:e.y,vx:Math.cos(fa)*200,vy:Math.sin(fa)*200,dmg:e.dmg,col:'#FF5722',sz:6,life:2,own:'e',mech:'',pierce:0,aoe:0})}sfx('boom')}
+     projs.push({x:e.x,y:e.y,vx:Math.cos(fa)*200,vy:Math.sin(fa)*200,dmg:e.dmg,col:'#FF5722',sz:6,life:2,own:'e',mech:'',pierce:0,aoe:0,trail:[]})}sfx('boom')}
    else if(r<.55){// Spawn minions
     for(let s=0;s<4+Math.floor(wave*.3);s++)spawnE()}
    else if(r<.75){// Charge at player
     e.chargeT=.6;e.chA=ea;e.charge=true;sfx('boss')}
    else{// Aimed triple shot
     for(let f=-1;f<=1;f++){const fa=ea+f*.3;
-     projs.push({x:e.x,y:e.y,vx:Math.cos(fa)*250,vy:Math.sin(fa)*250,dmg:Math.floor(e.dmg*1.2),col:'#FF1744',sz:7,life:2,own:'e',mech:'',pierce:0,aoe:0})}
+     projs.push({x:e.x,y:e.y,vx:Math.cos(fa)*250,vy:Math.sin(fa)*250,dmg:Math.floor(e.dmg*1.2),col:'#FF1744',sz:7,life:2,own:'e',mech:'',pierce:0,aoe:0,trail:[]})}
    }
   }
  }
@@ -199,7 +202,7 @@ const ea=ang(e,P),ed=dst(e,P);
 for(let i=pickups.length-1;i>=0;i--){
  const p=pickups[i];p.life-=dt;if(p.life<=0){pickups.splice(i,1);continue}
  const d=dst(p,P);
- if(d<P.magnet){const a=ang(p,P),s=Math.max(250,500-d*3);p.x+=Math.cos(a)*s*dt;p.y+=Math.sin(a)*s*dt}
+ if(d<P.magnet){const a=ang(p,P),s=Math.max(380,760-d*4.2);p.x+=Math.cos(a)*s*dt;p.y+=Math.sin(a)*s*dt}
  if(d<22){
   if(p.type==='xp'){addXP(p.val);sfx('xp')}
   else if(p.type==='coin'){coins+=p.val;triggerCoinHudPulse();sfx('coin')}
