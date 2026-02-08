@@ -117,32 +117,33 @@ pickups.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,b=Math.sin(gameTime*5+p.x)*3;
 
 // Enemies
 enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
- const emoY=sy+e.sz*.06; // optical centering for emoji glyph metrics
- X.fillStyle='rgba(0,0,0,.2)';X.beginPath();X.ellipse(sx,sy+e.sz*.6,e.sz*.7,e.sz*.25,0,0,PI2);X.fill();
+ const sp=e.spawnT>0&&e.spawnDur>0?clamp(1-e.spawnT/e.spawnDur,BALANCE.director.spawnPopMinScale,1):1;
+ const sz=e.sz*sp,emoY=sy+sz*.06; // optical centering for emoji glyph metrics
+ X.fillStyle='rgba(0,0,0,.2)';X.beginPath();X.ellipse(sx,sy+sz*.6,sz*.7,sz*.25,0,0,PI2);X.fill();
  // Elite glow
- if(e.elite){X.globalAlpha=.2+Math.sin(gameTime*6)*.1;X.fillStyle='#FFD700';X.beginPath();X.arc(sx,sy,e.sz+6,0,PI2);X.fill();X.globalAlpha=1}
+ if(e.elite){X.globalAlpha=.2+Math.sin(gameTime*6)*.1;X.fillStyle='#FFD700';X.beginPath();X.arc(sx,sy,sz+6,0,PI2);X.fill();X.globalAlpha=1}
  // Freeze visual
- if(e.freezeT>0){X.fillStyle='rgba(0,200,255,.3)';X.beginPath();X.arc(sx,sy,e.sz+4,0,PI2);X.fill()}
+ if(e.freezeT>0){X.fillStyle='rgba(0,200,255,.3)';X.beginPath();X.arc(sx,sy,sz+4,0,PI2);X.fill()}
  // Pin visual
- if(e.pinT>0){X.fillStyle='rgba(255,50,50,.25)';X.beginPath();X.arc(sx,sy,e.sz+3,0,PI2);X.fill()}
+ if(e.pinT>0){X.fillStyle='rgba(255,50,50,.25)';X.beginPath();X.arc(sx,sy,sz+3,0,PI2);X.fill()}
  // Body
  const eCol=e.flash>.01?'#fff':e.freezeT>0?'#88EEFF':e.slowT>0?'#88ccff':'#3a3a5a';
- X.fillStyle=eCol;X.beginPath();X.arc(sx,sy,e.sz,0,PI2);X.fill();
- X.globalAlpha=.18;X.fillStyle='#fff';X.beginPath();X.arc(sx-e.sz*.3,sy-e.sz*.35,e.sz*.45,0,PI2);X.fill();X.globalAlpha=1;
+ X.fillStyle=eCol;X.beginPath();X.arc(sx,sy,sz,0,PI2);X.fill();
+ X.globalAlpha=.18;X.fillStyle='#fff';X.beginPath();X.arc(sx-sz*.3,sy-sz*.35,sz*.45,0,PI2);X.fill();X.globalAlpha=1;
  X.strokeStyle=e.elite?'#FFD700':'rgba(255,255,255,.08)';X.lineWidth=e.elite?2:1;X.stroke();
- dE(e.emoji,sx,emoY,e.sz*1.3);
+ dE(e.emoji,sx,emoY,sz*1.3);
  // Infected marker
- if(e.infected){X.globalAlpha=.5+Math.sin(gameTime*8)*.3;dE('☣️',sx-e.sz*.7,sy-e.sz*.7,10);X.globalAlpha=1}
+ if(e.infected){X.globalAlpha=.5+Math.sin(gameTime*8)*.3;dE('☣️',sx-sz*.7,sy-sz*.7,10);X.globalAlpha=1}
  // HP bar
- if(e.hp<e.mhp){const bw=e.sz*2;dBar(sx-bw/2,sy-e.sz-9,bw,4,e.hp/e.mhp,e.isBoss?'#FF5252':'#66BB6A')}
- if(e.isBoss)dE('👑',sx,sy-e.sz-16,18);
+ if(e.hp<e.mhp){const bw=sz*2;dBar(sx-bw/2,sy-sz-9,bw,4,e.hp/e.mhp,e.isBoss?'#FF5252':'#66BB6A')}
+ if(e.isBoss)dE('👑',sx,sy-sz-16,18);
  // Status indicators (synergy readability)
  const sts=[];
  if(e.freezeT>0)sts.push('❄️');
  if(e.wetT>0)sts.push('💧');
  if(e.oilT>0)sts.push('🛢️');
  if(e.burnT>0)sts.push('🔥');
- if(sts.length)dT(sts.join(' '),sx,sy-e.sz-21,9,'#B3E5FC','center',true);
+ if(sts.length)dT(sts.join(' '),sx,sy-sz-21,9,'#B3E5FC','center',true);
  // Aura
  if(e.aura){X.globalAlpha=.06+Math.sin(gameTime*3)*.03;X.fillStyle='#FF5722';X.beginPath();X.arc(sx,sy,e.aura,0,PI2);X.fill();X.globalAlpha=1}
 });

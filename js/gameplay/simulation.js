@@ -1,23 +1,39 @@
 // Gameplay simulation module: spawning and per-frame update loop.
 
-function spawnE(){
-if(!P)return;const a=rng(0,PI2),d=Math.max(VW,VH)*.55+rng(30,120);
-const sx=P.x+Math.cos(a)*d,sy=P.y+Math.sin(a)*d;
-const mx=Math.min(2+Math.floor(wave*0.7),ET.length); // unlocks types FASTER
-const et=ET[rngI(0,mx-1)];
+function spawnE(opts){
+if(!P)return;
+opts=opts||{};
+let sx,sy;
+if(Number.isFinite(opts.x)&&Number.isFinite(opts.y)){sx=opts.x;sy=opts.y}
+else{
+ const a=rng(0,PI2),d=Math.max(VW,VH)*.55+rng(30,120);
+ sx=P.x+Math.cos(a)*d;sy=P.y+Math.sin(a)*d;
+}
+let et=null;
+if(Number.isInteger(opts.etIndex)&&ET[opts.etIndex])et=ET[opts.etIndex];
+else if(opts.role==='fast'){
+ const fi=[3,4,7,11].filter(i=>i<ET.length);et=ET[fi[rngI(0,fi.length-1)]||0];
+}else if(opts.role==='tank'){
+ const ti=[2,8,10].filter(i=>i<ET.length);et=ET[ti[rngI(0,ti.length-1)]||0];
+}else{
+ const wi=[0,1,5,6,9].filter(i=>i<ET.length),mx=Math.min(2+Math.floor(wave*0.7),ET.length);
+ et=opts.role==='weak'?ET[wi[rngI(0,wi.length-1)]||0]:ET[rngI(0,mx-1)];
+}
 const sc=1+wave*.18; // HP scales 18% per wave (was 12%)
 const spdSc=1+wave*.04; // Speed also scales!
 const dmgSc=1+wave*.1; // DMG scales 10% per wave
 // ELITE chance: 15% from wave 3, 30% from wave 7
-const isElite=wave>=3&&Math.random()<(wave>=7?.3:.15);
+const isElite=opts.elite===true||(opts.elite!==false&&wave>=3&&Math.random()<(wave>=7?.3:.15));
 const em=isElite?2.5:1, esm=isElite?1.3:1, edm=isElite?1.5:1;
+const inView=Math.abs(sx-P.x)<=VW*.55&&Math.abs(sy-P.y)<=VH*.55;
+const popDur=inView?BALANCE.director.spawnPopDuration:0;
 enemies.push({...et,x:sx,y:sy,
 hp:Math.floor(et.hp*sc*em),mhp:Math.floor(et.hp*sc*em),
 spd:et.spd*spdSc*esm,dmg:Math.floor(et.dmg*dmgSc*edm),
 xp:Math.floor(et.xp*(1+wave*.05)*(isElite?2:1)),
 co:et.co*(isElite?3:1),flash:0,slowT:0,freezeT:0,pinT:0,
 atkT:0,isBoss:false,elite:isElite,infected:false,
-chargeT:0,chargeCD:0,uid:Math.random()
+chargeT:0,chargeCD:0,rushT:Math.max(0,Number(opts.rushT)||0),rushVX:Number(opts.rushVX)||0,rushVY:Number(opts.rushVY)||0,spawnT:popDur,spawnDur:Math.max(.001,popDur),uid:Math.random()
 });
 }
 
@@ -29,20 +45,151 @@ bt.xp=Math.floor(bt.xp*(1+wave*.08));
 const a=rng(0,PI2);bt.x=P.x+Math.cos(a)*350;bt.y=P.y+Math.sin(a)*350;
 bt.flash=0;bt.slowT=0;bt.freezeT=0;bt.pinT=0;bt.atkT=0;bt.isBoss=true;
 bt.elite=false;bt.infected=false;bt.chargeT=0;bt.chargeCD=0;bt.uid=Math.random();
+const bossInView=Math.abs(bt.x-P.x)<=VW*.55&&Math.abs(bt.y-P.y)<=VH*.55;
+bt.spawnT=bossInView?BALANCE.director.spawnPopDuration:0;bt.spawnDur=Math.max(.001,bt.spawnT||0);
 bossRef=bt;enemies.push(bt);sfx('boss');
 }
 
-function waveEnemyTarget(wv){
-const wc=BALANCE.waves;
-return Math.max(1,Math.floor(wc.baseEnemyCount+wv*wc.perWaveEnemyCount));
+function waveLerp(v1,v10,wv){
+const t=clamp((wv-1)/9,0,1);
+return lerp(v1,v10,t);
 }
 
-function beginWave(wv){
-if(!P)return;
+function directorEventCount(wv){
+return Math.max(1,Math.round(waveLerp(BALANCE.director.events.wave1Count,BALANCE.director.events.wave10Count,wv)));
+}
+
+function directorAmbientInterval(wv){
+return Math.max(.05,waveLerp(BALANCE.director.ambient.intervalWave1,BALANCE.director.ambient.intervalWave10,wv));
+}
+
+function directorWaveBudget(wv){
+const b=BALANCE.director.budget;
+if(wv<=1)return Math.floor(b.wave1);
+if(wv>=10)return Math.floor(b.wave10*Math.pow(1.12,wv-10));
+const k=(wv-1)/9;
+return Math.floor(b.wave1*Math.pow(b.wave10/b.wave1,k));
+}
+
+function directorEnemyMix(wv){
+const m=BALANCE.director.mix;
+const weak=clamp(waveLerp(m.weakWave1,m.weakWave10,wv),0,1);
+const fast=clamp(waveLerp(m.fastWave1,m.fastWave10,wv),0,1-weak);
+const tank=clamp(1-weak-fast,0,1);
+return{weak,fast,tank};
+}
+
+function chooseRoleByMix(wv){
+const m=directorEnemyMix(wv),r=Math.random();
+if(r<m.weak)return'weak';
+if(r<m.weak+m.fast)return'fast';
+return'tank';
+}
+
+function directorEventRole(wv){
+if(wv<=3)return'weak';
+if(wv<=7)return'fast';
+return'tank';
+}
+
+function eventTypeIndexForRole(role){
+let pool=[0];
+if(role==='fast')pool=[3,4,7,11].filter(i=>i<ET.length);
+else if(role==='tank')pool=[2,8,10].filter(i=>i<ET.length);
+else pool=[0,1,5,6,9].filter(i=>i<ET.length);
+if(!pool.length)pool=[0];
+return pool[rngI(0,pool.length-1)];
+}
+
+function spendDirector(role){
+const c=BALANCE.director.budget.cost[role]||1;
+if(directorBudget<c)return false;
+directorBudget-=c;
+return true;
+}
+
+function buildDirectorEvents(wv){
+const cfg=BALANCE.director,types=cfg.events.types.slice(),n=directorEventCount(wv);
+const out=[],step=cfg.waveDuration/(n+1);
+for(let i=0;i<n;i++){
+ const t=Math.max(6,step*(i+1)+rng(-2,2));
+ const type=types[rngI(0,types.length-1)];
+ let count=12;
+ if(type==='CIRCLE')count=Math.round(waveLerp(cfg.events.circle.countWave1,cfg.events.circle.countWave10,wv));
+ else if(type==='STAMPEDE')count=Math.round(waveLerp(cfg.events.stampede.countWave1,cfg.events.stampede.countWave10,wv));
+ else if(type==='AMBUSH')count=Math.round(waveLerp(cfg.events.ambush.eliteWave1,cfg.events.ambush.eliteWave10,wv)+waveLerp(cfg.events.ambush.minionWave1,cfg.events.ambush.minionWave10,wv));
+ const role=directorEventRole(wv);
+ out.push({time:t,type,count,role,etIndex:eventTypeIndexForRole(role),fired:false});
+}
+out.sort((a,b)=>a.time-b.time);
+return out;
+}
+
+function spawnCircleEvent(wv,count,role,etIndex){
+const ec=BALANCE.director.events.circle,rad=waveLerp(ec.radiusWave1,ec.radiusWave10,wv);
+const n=Math.max(4,count);
+for(let i=0;i<n;i++){
+ if(!spendDirector(role))break;
+ const a=(i/n)*PI2,x=clamp(P.x+Math.cos(a)*rad,30,worldW-30),y=clamp(P.y+Math.sin(a)*rad,30,worldH-30);
+ spawnE({x,y,role,etIndex,elite:false});
+}
+fTxt(P.x,P.y-46,'⭕ EINKREISUNG','#FFB74D',14);
+}
+
+function spawnStampedeEvent(wv,count,role,etIndex){
+const sc=BALANCE.director.events.stampede;
+const speed=waveLerp(sc.speedWave1,sc.speedWave10,wv);
+const side=rngI(0,3);
+for(let i=0;i<count;i++){
+ if(!spendDirector(role))break;
+ let x=P.x,y=P.y,vx=0,vy=0;
+ if(side===0){x=clamp(P.x-VW*.7,20,worldW-20);y=clamp(P.y+rng(-VH*.45,VH*.45),20,worldH-20);vx=speed}
+ else if(side===1){x=clamp(P.x+VW*.7,20,worldW-20);y=clamp(P.y+rng(-VH*.45,VH*.45),20,worldH-20);vx=-speed}
+ else if(side===2){x=clamp(P.x+rng(-VW*.45,VW*.45),20,worldW-20);y=clamp(P.y-VH*.7,20,worldH-20);vy=speed}
+ else{x=clamp(P.x+rng(-VW*.45,VW*.45),20,worldW-20);y=clamp(P.y+VH*.7,20,worldH-20);vy=-speed}
+ spawnE({x,y,role,etIndex,elite:false,rushT:sc.rushDuration,rushVX:vx,rushVY:vy});
+}
+fTxt(P.x,P.y-46,'🏃 STAMPEDE','#FF8A65',14);
+}
+
+function spawnAmbushEvent(wv,role,etIndex){
+const a=BALANCE.director.events.ambush,pts=[
+ {x:clamp(P.x,30,worldW-30),y:clamp(P.y-a.distance,30,worldH-30)},
+ {x:clamp(P.x+a.distance,30,worldW-30),y:clamp(P.y,30,worldH-30)},
+ {x:clamp(P.x,30,worldW-30),y:clamp(P.y+a.distance,30,worldH-30)},
+ {x:clamp(P.x-a.distance,30,worldW-30),y:clamp(P.y,30,worldH-30)}
+];
+const eCount=Math.max(1,Math.round(waveLerp(a.eliteWave1,a.eliteWave10,wv)));
+const mCount=Math.max(0,Math.round(waveLerp(a.minionWave1,a.minionWave10,wv)));
+for(let i=0;i<eCount;i++){
+ if(!spendDirector(role))break;
+ const p=pts[i%pts.length];
+ spawnE({x:p.x,y:p.y,role,etIndex,elite:wv>=8});
+}
+for(let i=0;i<mCount;i++){
+ if(!spendDirector(role))break;
+ const p=pts[i%pts.length];
+ spawnE({x:clamp(p.x+rng(-55,55),20,worldW-20),y:clamp(p.y+rng(-55,55),20,worldH-20),role,etIndex,elite:false});
+}
+fTxt(P.x,P.y-46,'🎯 AMBUSH','#CE93D8',14);
+}
+
+function triggerDirectorEvent(ev){
+if(!P||!ev||ev.fired)return;
+ev.fired=true;
+const role=ev.role||directorEventRole(wave);
+const etIndex=Number.isInteger(ev.etIndex)?ev.etIndex:eventTypeIndexForRole(role);
+if(ev.type==='CIRCLE')spawnCircleEvent(wave,ev.count,role,etIndex);
+else if(ev.type==='STAMPEDE')spawnStampedeEvent(wave,ev.count,role,etIndex);
+else spawnAmbushEvent(wave,role,etIndex);
+}
+
+function buildDirectorWave(wv){
 wave=wv;
-waveSpawned=0;
-waveTarget=waveEnemyTarget(wv);
-spawnT=0;
+waveSpawned=0;waveTarget=0;spawnT=0;
+directorWaveTime=0;directorAmbientT=0;
+directorBudget=directorWaveBudget(wv);
+directorEvents=buildDirectorEvents(wv);
 if(wave%5===0)spawnBoss();
 }
 
@@ -286,24 +433,23 @@ tickTemps(dt);
 // Combo timer
 if(comboT>0){comboT-=dt*(hasTemp('poster')?.55:1);if(comboT<=0){combo=0;lastMS=0}}
 
-if(waveTarget<=0&&waveT<=0)beginWave(Math.max(1,wave));
+if(!directorEvents.length&&waveT<=0)buildDirectorWave(Math.max(1,wave));
 if(waveT>0){
  waveT=Math.max(0,waveT-dt);
- if(waveT<=0){sfx('lvl');beginWave(wave+1)}
+ if(waveT<=0){sfx('lvl');buildDirectorWave(wave+1)}
 }
 
 if(waveT<=0){
- const wc=BALANCE.waves;
- const sr=Math.max(wc.spawnIntervalMin,wc.spawnIntervalBase-wave*wc.spawnIntervalWaveScale);
- spawnT+=dt;
- if(spawnT>=sr&&enemies.length<wc.maxAliveBase+wave*wc.maxAlivePerWave&&waveSpawned<waveTarget){
-  spawnT=0;
-  const batch=Math.min(wc.spawnBatchBase+Math.floor(wave*wc.spawnBatchWaveScale),wc.spawnBatchMax);
-  const cnt=Math.min(batch,waveTarget-waveSpawned);
-  for(let i=0;i<cnt;i++){spawnE();waveSpawned++}
+ directorWaveTime+=dt;directorAmbientT+=dt;
+ const ai=directorAmbientInterval(wave);
+ if(directorAmbientT>=ai){
+  directorAmbientT=0;
+  const role=chooseRoleByMix(wave);
+  if(spendDirector(role))spawnE({role});
  }
- if(waveSpawned>=waveTarget&&!bossRef){
-  waveTarget=0;waveT=BALANCE.waves.breakDuration;
+ for(const ev of directorEvents){if(!ev.fired&&directorWaveTime>=ev.time)triggerDirectorEvent(ev)}
+ if(directorWaveTime>=BALANCE.director.waveDuration&&!bossRef){
+  waveT=BALANCE.waves.breakDuration;
   fTxt(P.x,P.y-40,'☕ Kurze Pause','#80CBC4',16);
  }
 }
@@ -375,6 +521,7 @@ for(let i=enemies.length-1;i>=0;i--){
  if(e.oilT>0)e.oilT=Math.max(0,e.oilT-dt);
  if(e.burnT>0)e.burnT=Math.max(0,e.burnT-dt);
  if(e.synCD>0)e.synCD=Math.max(0,e.synCD-dt);
+ if(e.spawnT>0){e.spawnT=Math.max(0,e.spawnT-dt);continue}
 
  // Movement (with freeze/pin/slow)
  let ms=e.spd;
@@ -386,9 +533,15 @@ for(let i=enemies.length-1;i>=0;i--){
  if(hasTemp('jam')&&dst(P,e)<130){ms*=.2;if(Math.random()<dt*2)e.pinT=Math.max(e.pinT,.3)}
 
 const ea=ang(e,P),ed=dst(e,P);
+ const rushing=e.rushT>0&&ms>0;
+ if(rushing){
+  e.rushT-=dt;
+  e.x+=e.rushVX*dt;e.y+=e.rushVY*dt;
+  e.x=clamp(e.x,20,worldW-20);e.y=clamp(e.y,20,worldH-20);
+ }
 
  // Charge attack (Deadline, Wütender Kunde)
- if(e.charge&&!e.isBoss){
+ if(!rushing&&e.charge&&!e.isBoss){
   e.chargeCD=(e.chargeCD||0)+dt;
   if(e.chargeCD>3&&ed<250&&ed>60&&ms>0){
    e.chargeT=.4;e.chargeCD=0;e.chA=ea; // Lock angle and sprint
@@ -396,7 +549,7 @@ const ea=ang(e,P),ed=dst(e,P);
   if(e.chargeT>0){e.chargeT-=dt;ms=e.spd*4;const ca=e.chA||ea;
    e.x+=Math.cos(ca)*ms*dt;e.y+=Math.sin(ca)*ms*dt}
   else{e.x+=Math.cos(ea)*ms*dt;e.y+=Math.sin(ea)*ms*dt}
- }else if(ms>0){
+ }else if(!rushing&&ms>0){
   const ma=e.fearT>0?ea+PI:ea;
   e.x+=Math.cos(ma)*ms*dt;e.y+=Math.sin(ma)*ms*dt
  }

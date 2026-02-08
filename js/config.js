@@ -1,5 +1,51 @@
 // Global balance/config knobs for fast gameplay tuning.
 const BALANCE={
+ director:{
+  spawnPopDuration:0.35,
+  spawnPopMinScale:0.12,
+  waveDuration:50,
+  ambient:{
+   intervalWave1:2,
+   intervalWave10:.3
+  },
+  events:{
+   wave1Count:1,
+   wave5Count:2,
+   wave10Count:4,
+   types:['CIRCLE','STAMPEDE','AMBUSH'],
+   circle:{
+    radiusWave1:300,
+    radiusWave10:170,
+    countWave1:12,
+    countWave10:48
+   },
+   stampede:{
+    countWave1:10,
+    countWave10:34,
+    speedWave1:260,
+    speedWave10:430,
+    rushDuration:2.8
+   },
+   ambush:{
+    distance:250,
+    eliteWave1:1,
+    eliteWave10:4,
+    minionWave1:0,
+    minionWave10:8
+   }
+  },
+  budget:{
+   wave1:10,
+   wave10:1000,
+   cost:{weak:1,fast:2,tank:10}
+  },
+  mix:{
+   weakWave1:1,
+   weakWave10:.6,
+   fastWave1:0,
+   fastWave10:.3
+  }
+ },
  waves:{
   breakDuration:6,
   baseEnemyCount:12,

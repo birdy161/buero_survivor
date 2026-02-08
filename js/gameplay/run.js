@@ -11,6 +11,7 @@ const wd=WP[ch.wep];P.weps.push({...wd,id:ch.wep,timer:0,lv:1,shotCount:0});
 enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 gameTime=0;kills=0;coins=0;wave=1;waveT=0;spawnT=0;
 waveSpawned=0;waveTarget=0;
+directorWaveTime=0;directorAmbientT=0;directorBudget=0;directorEvents=[];
 arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;
 activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;
 combo=0;comboT=0;lastMS=0;comboSpdB=0;comboShield=0;
@@ -24,7 +25,7 @@ function saveRunNow(){
 if(!P||state==='menu'||state==='charsel'||state==='shop'||state==='stats'||state==='gameover')return;
 save.run={
 v:1,selChar,state:'pause',
-gameTime,kills,coins,wave,waveT,spawnT,waveSpawned,waveTarget,objectiveSpawnT,objectivePenaltyT,activeObjective,combo,comboT,lastMS,comboSpdB,comboShield,specCD,
+gameTime,kills,coins,wave,waveT,spawnT,waveSpawned,waveTarget,directorWaveTime,directorAmbientT,directorBudget,directorEvents,objectiveSpawnT,objectivePenaltyT,activeObjective,combo,comboT,lastMS,comboSpdB,comboShield,specCD,
 activeTemps,tempData,
 P:{
 x:P.x,y:P.y,hp:P.hp,mhp:P.mhp,spd:P.spd,bdmg:P.bdmg,dmgM:P.dmgM,atkSpd:P.atkSpd,spdM:P.spdM,armor:P.armor,regen:P.regen,
@@ -59,12 +60,14 @@ if(!P.weps.length){const wd=WP[ch.wep];P.weps.push({...wd,id:ch.wep,timer:0,lv:1
 gameTime=Math.max(0,num(r.gameTime,0));kills=Math.max(0,Math.floor(num(r.kills,0)));coins=Math.max(0,Math.floor(num(r.coins,0)));wave=Math.max(1,Math.floor(num(r.wave,1)));
 waveT=Math.max(0,num(r.waveT,0));spawnT=Math.max(0,num(r.spawnT,0));
 waveSpawned=Math.max(0,Math.floor(num(r.waveSpawned,0)));waveTarget=Math.max(0,Math.floor(num(r.waveTarget,0)));
+directorWaveTime=Math.max(0,num(r.directorWaveTime,0));directorAmbientT=Math.max(0,num(r.directorAmbientT,0));directorBudget=Math.max(0,num(r.directorBudget,0));directorEvents=Array.isArray(r.directorEvents)?r.directorEvents:[];
 objectiveSpawnT=Math.max(0,num(r.objectiveSpawnT,0));objectivePenaltyT=Math.max(0,num(r.objectivePenaltyT,0));activeObjective=r.activeObjective&&typeof r.activeObjective==='object'?r.activeObjective:null;
 combo=Math.max(0,Math.floor(num(r.combo,0)));comboT=Math.max(0,num(r.comboT,0));lastMS=Math.max(0,Math.floor(num(r.lastMS,0)));
 comboSpdB=Math.max(0,num(r.comboSpdB,0));comboShield=Math.max(0,num(r.comboShield,0));
 activeTemps=r.activeTemps||{};tempData=r.tempData||{};normalizeTempState();
 specCD=Math.max(0,num(r.specCD,0));bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;
+if(!directorEvents.length&&typeof buildDirectorWave==='function'&&P&&waveT<=0)buildDirectorWave(Math.max(1,wave));
 if(activeObjective&&activeObjective.type==='escort'){
  const e=activeObjective;
  e.orbX=num(e.orbX,P.x);e.orbY=num(e.orbY,P.y);e.machineX=num(e.machineX,P.x+200);e.machineY=num(e.machineY,P.y);
@@ -80,6 +83,6 @@ if(activeObjective&&activeObjective.type==='escort'){
 cam={x:P.x-VW/2,y:P.y-VH/2,shake:0};state='pause';runSaveTimer=0;pendingGameOverT=0;timeScale=1;timeScaleT=0;impactFlash=0;
 }catch(e){
  clearRunSave();
- state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;waveSpawned=0;waveTarget=0;activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;inputDir={x:0,y:0};joyAct=false;joyId=null;
+ state='menu';P=null;enemies=[];projs=[];pickups=[];parts=[];gfx=[];arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;waveSpawned=0;waveTarget=0;directorWaveTime=0;directorAmbientT=0;directorBudget=0;directorEvents=[];activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;inputDir={x:0,y:0};joyAct=false;joyId=null;
 }
 }
