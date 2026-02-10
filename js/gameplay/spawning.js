@@ -280,12 +280,12 @@ function applyMicromanagerBuffs(){
 const rr=(BALANCE.director.specialEnemies?.micromanager?.buffRadius)||220;
 for(const e of enemies){e.mmBuff=false}
 const ms=enemies.filter(e=>e.hp>0&&e.special==='micromanager');
-for(const m of ms){
- for(const e of enemies){
-  if(e===m||e.hp<=0)continue;
+ for(const m of ms){
+  for(const e of enemies){
+  if(e===m||e.hp<=0||e.special==='micromanager')continue;
   if(dst(m,e)<=rr)e.mmBuff=true;
+  }
  }
-}
 }
 
 function buildDirectorWave(wv){
