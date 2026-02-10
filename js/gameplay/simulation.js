@@ -262,11 +262,25 @@ for(let i=enemies.length-1;i>=0;i--){
   if(sd<sn.minRange){e.x-=Math.cos(ea)*ms*dt;e.y-=Math.sin(ea)*ms*dt}
   else if(sd>sn.maxRange){e.x+=Math.cos(ea)*ms*.5*dt;e.y+=Math.sin(ea)*ms*.5*dt}
   e.x=clamp(e.x,20,worldW-20);e.y=clamp(e.y,20,worldH-20);
+  if((e.snipeBeamT||0)>0){
+   e.snipeBeamT-=dt;
+   e.snipeBeamHitT=Math.max(0,(e.snipeBeamHitT||0)-dt);
+   const la=e.snipeBeamA||ea,dx=Math.cos(la),dy=Math.sin(la);
+   const vx=P.x-e.x,vy=P.y-e.y;
+   const t=clamp(vx*dx+vy*dy,0,sn.maxRange);
+   const cx=e.x+dx*t,cy=e.y+dy*t;
+   if(dst(P,{x:cx,y:cy})<=sn.laserWidth+P.sz*.2&&e.snipeBeamHitT<=0){
+    pHurt(sn.laserDamage||e.dmg);
+    e.snipeBeamHitT=sn.laserTick||0.25;
+   }
+  }
   if((e.snipeCharge||0)>0){
    e.snipeCharge-=dt;
    if(e.snipeCharge<=0){
     const aa=e.snipeA||ea;
-    projs.push({x:e.x,y:e.y,vx:Math.cos(aa)*sn.projectileSpeed,vy:Math.sin(aa)*sn.projectileSpeed,dmg:e.dmg,col:'#FF1744',sz:6,life:2,own:'e',mech:'',pierce:0,aoe:0,trail:[]});
+    e.snipeBeamA=aa;
+    e.snipeBeamT=sn.laserDuration||0.8;
+    e.snipeBeamHitT=0;
    }
   }else{
    e.snipeCd=(e.snipeCd||0)+dt;

@@ -194,6 +194,20 @@ enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
  if(sts.length)dT(sts.join(' '),sx,sy-rsz-21,9,'#B3E5FC','center',true);
  // Aura
  if(e.aura){X.globalAlpha=.06+Math.sin(gameTime*3)*.03;X.fillStyle='#FF5722';X.beginPath();X.arc(sx,sy,e.aura,0,PI2);X.fill();X.globalAlpha=1}
+ // Sniper telegraph + beam
+ if(e.special==='sniper'){
+  const sn=BALANCE.director.specialEnemies.sniper;
+  if((e.snipeCharge||0)>0){
+   const a=e.snipeA||0,dx=Math.cos(a),dy=Math.sin(a);
+   X.strokeStyle='rgba(255,82,82,.35)';X.lineWidth=2;
+   X.beginPath();X.moveTo(sx,sy);X.lineTo(sx+dx*sn.maxRange,sy+dy*sn.maxRange);X.stroke();
+  }
+  if((e.snipeBeamT||0)>0){
+   const a=e.snipeBeamA||0,dx=Math.cos(a),dy=Math.sin(a);
+   X.strokeStyle='rgba(255,23,68,.9)';X.lineWidth=sn.laserWidth||10;
+   X.beginPath();X.moveTo(sx,sy);X.lineTo(sx+dx*sn.maxRange,sy+dy*sn.maxRange);X.stroke();
+  }
+ }
 });
 
 // Projectiles

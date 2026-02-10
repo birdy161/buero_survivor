@@ -47,15 +47,20 @@ const BALANCE={
    maxSniperAlive:2,
    micromanager:{
     budgetRole:'fast',
-    buffRadius:220
+    buffRadius:100,
+    hp:300
    },
    sniper:{
     budgetRole:'fast',
     chargeTime:2,
     cooldown:4,
     projectileSpeed:560,
-     minRange:260,
-     maxRange:520
+    minRange:260,
+    maxRange:520,
+    laserDuration:0.8,
+    laserWidth:12,
+    laserTick:0.25,
+    laserDamage:18
   }
    },
    bossHazards:{

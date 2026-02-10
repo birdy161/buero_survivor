@@ -128,7 +128,7 @@ const ET=[
 {name:'Endlos-Zoom',emoji:'📱',hp:48,spd:55,dmg:4,sz:19,xp:12,co:3,aura:95},
 {name:'Aktenschrank',emoji:'🗄️',hp:85,spd:32,dmg:26,sz:26,xp:20,co:5},
 {name:'Compliance-Audit',emoji:'🔍',hp:55,spd:105,dmg:18,sz:18,xp:18,co:4},
-{name:'Micromanager',emoji:'📣',hp:62,spd:95,dmg:0,sz:16,xp:22,co:4,special:'micromanager'},
+{name:'Micromanager',emoji:'📣',hp:(BALANCE.director?.specialEnemies?.micromanager?.hp||620),spd:95,dmg:0,sz:16,xp:22,co:4,special:'micromanager'},
 {name:'HR Complaint',emoji:'📨',hp:42,spd:86,dmg:20,sz:15,xp:24,co:5,special:'sniper'},
 ];
 const BT=[
