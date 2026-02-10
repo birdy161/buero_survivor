@@ -106,11 +106,11 @@ const COMBO_M=[
 // ═══════ CHARACTERS ═══════
 const CHARS=[
 {id:0,name:'Praktikant',emoji:'👨‍💼',desc:'Ausgewogen',hp:85,spd:150,dmg:10,color:'#4CAF50',cost:0,wep:'pencil',spec:'coffee',sCD:15,sN:'☕ Kaffeepause'},
-{id:1,name:'IT-Admina',emoji:'👩‍💻',desc:'Schnell & präzise',hp:65,spd:190,dmg:12,color:'#2196F3',cost:120,wep:'mouse',spec:'reboot',sCD:12,sN:'🔄 Neustart'},
-{id:2,name:'Koch',emoji:'👨‍🍳',desc:'Tank mit Soße',hp:130,spd:110,dmg:16,color:'#FF9800',cost:200,wep:'food',spec:'soup',sCD:10,sN:'🍜 Kantinenkeule'},
-{id:3,name:'Hausmeister',emoji:'🧹',desc:'Mopp-Fu Meister',hp:95,spd:140,dmg:13,color:'#9C27B0',cost:180,wep:'mop',spec:'sweep',sCD:13,sN:'🌊 Großputz'},
-{id:4,name:'Ärztin',emoji:'👩‍⚕️',desc:'Passiv-Regen',hp:75,spd:148,dmg:9,color:'#E91E63',cost:300,wep:'syringe',spec:'immune',sCD:20,sN:'📋 Krankschreibung'},
-{id:5,name:'Betriebsrat',emoji:'✊',desc:'Anti-Stress Tank. Teuer.',hp:170,spd:180,dmg:22,color:'#FFD700',cost:999,wep:'creditcard',spec:'nuke',sCD:25,sN:'📢 Streikaufruf'},
+{id:1,name:'IT-Admina',emoji:'👩‍💻',desc:'Schnell & präzise',hp:65,spd:190,dmg:12,color:'#2196F3',cost:1200,wep:'mouse',spec:'reboot',sCD:12,sN:'🔄 Neustart'},
+{id:2,name:'Koch',emoji:'👨‍🍳',desc:'Tank mit Soße',hp:130,spd:110,dmg:16,color:'#FF9800',cost:2000,wep:'food',spec:'soup',sCD:10,sN:'🍜 Kantinenkeule'},
+{id:3,name:'Hausmeister',emoji:'🧹',desc:'Mopp-Fu Meister',hp:95,spd:140,dmg:13,color:'#9C27B0',cost:1800,wep:'mop',spec:'sweep',sCD:13,sN:'🌊 Großputz'},
+{id:4,name:'Ärztin',emoji:'👩‍⚕️',desc:'Passiv-Regen',hp:75,spd:148,dmg:9,color:'#E91E63',cost:3000,wep:'syringe',spec:'immune',sCD:20,sN:'📋 Krankschreibung'},
+{id:5,name:'Betriebsrat',emoji:'✊',desc:'Anti-Stress Tank. Teuer.',hp:170,spd:180,dmg:22,color:'#FFD700',cost:9990,wep:'creditcard',spec:'nuke',sCD:25,sN:'📢 Streikaufruf'},
 ];
 let selChar=0;
 
