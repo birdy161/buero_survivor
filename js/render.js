@@ -225,15 +225,19 @@ if(activeObjective){
   for(const orb of o.orbs){
    if(orb.done)continue;
    const sx=orb.x-cx,sy=orb.y-cy;
+   const glow=.35+.2*Math.sin(gameTime*6+sx*.02+sy*.02);
+   X.globalAlpha=glow;X.fillStyle='rgba(197,225,165,.35)';X.beginPath();X.arc(sx,sy,28,0,PI2);X.fill();X.globalAlpha=1;
    X.fillStyle='rgba(197,225,165,.12)';X.beginPath();X.arc(sx,sy,16,0,PI2);X.fill();
    X.strokeStyle='rgba(197,225,165,.6)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,16,0,PI2);X.stroke();
    dE('☕',sx,sy,16);
   }
  }else if(o.type==='call'){
   const sx=o.x-cx,sy=o.y-cy,p=clamp(o.progress/o.target,0,1);
+  const remain=Math.max(0,o.target-o.progress);
   X.fillStyle='rgba(179,157,219,.08)';X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.fill();
   X.strokeStyle='rgba(179,157,219,.5)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.stroke();
   X.strokeStyle='#B39DDB';X.lineWidth=4;X.beginPath();X.arc(sx,sy,o.r+5,-PI/2,-PI/2+p*PI2);X.stroke();
+  dT(Math.ceil(remain)+'s',sx,sy+2,11,'#D1C4E9','center',true);
   dE('📞',sx,sy,18);
   dT('ANRUF – FEINDE RAUS',sx,sy+18,9,'#D1C4E9','center',true);
  }else if(o.type==='escort'){
