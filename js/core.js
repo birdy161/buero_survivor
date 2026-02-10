@@ -211,7 +211,7 @@ const TEMP_ITEMS=[
 {id:'firewall',emoji:'🔥',name:'Firewall Badge',dur:8,desc:'Blockt Fernkampf-Projektile, gibt XP/Münzen'},
 {id:'leave',emoji:'🏖️',name:'Paid Leave',dur:6,desc:'Kein Kontaktschaden + Pushback'},
 {id:'meeting',emoji:'❄️',name:'Meeting Cancelled',dur:0,desc:'Sofortiger Freeze-Puls'},
-{id:'expense',emoji:'🧾',name:'Expense Report',dur:12,desc:'Kills droppen Bonus-Münzen'},
+{id:'expense',emoji:'🧾',name:'Expense Report',dur:BALANCE.drops.expenseDuration,desc:'Kills droppen Bonus-Münzen'},
 {id:'ergo',emoji:'🧘',name:'Ergonomic Aura',dur:10,desc:'Regen + temporäre Rüstung'},
 {id:'jam',emoji:'🖨️',name:'Printer Jam Field',dur:7,desc:'Nahbereich stark verlangsamt'},
 {id:'drone',emoji:'🤖',name:'IT Helpdesk Drone',dur:9,desc:'Orbit-Drohne zapt Gegner'},

@@ -67,6 +67,7 @@ const BALANCE={
   spawnIntervalWaveScale:0.12,
   spawnIntervalMin:0.12,
   spawnBatchBase:1,
+  expenseDuration:5,
   spawnBatchWaveScale:0.5,
   spawnBatchMax:6,
   maxAliveBase:50,
@@ -119,7 +120,7 @@ const BALANCE={
   enemyCoinValueMultiplier:1,
   enemyHpDropChance:0.03,
   goldrushCoinHitChance:0.25,
-  expenseBonusCoinDrops:2,
+  expenseBonusCoinDrops:1,
   bossCoinBurstCount:10,
   bossCoinValueDivisor:10
  },

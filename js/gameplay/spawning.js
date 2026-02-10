@@ -426,7 +426,7 @@ const roll=Math.random();
 if(roll<.34){
  const hc=oc.hold,p=pickArenaPos(170,480);
  activeObjective={type:'hold',x:p.x,y:p.y,r:hc.radius,progress:0,target:hc.targetTime,decay:hc.decayPerSec,timer:hc.timeout};
- fTxt(p.x,p.y-24,'🛡️ Zone halten','#B2EBF2',16);
+ fTxt(p.x,p.y-24,'🛡️ Konferenzbesprechung halten','#B2EBF2',16);
  return;
 }
 if(roll<.67){
@@ -453,7 +453,7 @@ if(o.type==='hold'){
  P.shieldT=Math.max(P.shieldT,oc.hold.rewardShield);
  objectiveRewardText=`Belohnung: +${oc.hold.rewardCoins} Münzen, Schild ${oc.hold.rewardShield.toFixed(1)}s`;
  objectiveRewardT=2.6;
- fTxt(P.x,P.y-34,'✅ Zone gesichert','#80CBC4',16);sfx('coin');
+ fTxt(P.x,P.y-34,'✅ Konferenzbesprechung abgeschlossen','#80CBC4',16);sfx('coin');
 }else if(o.type==='hazard'){
  coins+=oc.hazard.rewardCoins;triggerCoinHudPulse();addXP(oc.hazard.rewardXp);
  objectiveRewardText=`Belohnung: +${oc.hazard.rewardCoins} Münzen, +${oc.hazard.rewardXp} XP`;
@@ -479,7 +479,7 @@ if(activeObjective.type==='hazard'){
 }else if(activeObjective.type==='escort'){
  fTxt(P.x,P.y-36,'❌ Post verspätet','#FFAB91',15);
 }else if(activeObjective.type==='hold'){
- fTxt(P.x,P.y-36,'❌ Zone nicht gehalten','#FFAB91',15);
+ fTxt(P.x,P.y-36,'❌ Konferenzbesprechung abgebrochen','#FFAB91',15);
 }
 activeObjective=null;objectiveSpawnT=0;
 }

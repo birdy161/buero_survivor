@@ -70,9 +70,11 @@ if(waveT<=0){
    if(directorBudget>=roleCost(role))spendDirector(role); // optional budget spend
    spawnE({special:'micromanager'});
   }else if(sp==='sniper'){
-   const role=(BALANCE.director.specialEnemies?.sniper?.budgetRole)||'fast';
+   const sn=BALANCE.director.specialEnemies?.sniper||{};
+   const role=sn.budgetRole||'fast';
    if(directorBudget>=roleCost(role))spendDirector(role); // optional budget spend
-   spawnE({special:'sniper',edgeSpawn:true});
+   const p=pickArenaPos(sn.minRange||260,sn.maxRange||520);
+   spawnE({special:'sniper',x:p.x,y:p.y});
   }else{
    const role=chooseRoleByMix(wave);
    if(spendDirector(role))spawnE({role});

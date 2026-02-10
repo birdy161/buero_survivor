@@ -86,7 +86,9 @@ if(activeObjective){
   X.fillStyle='rgba(0,188,212,.08)';X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.fill();
   X.strokeStyle='rgba(0,188,212,.45)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.stroke();
   X.strokeStyle='#00E5FF';X.lineWidth=4;X.beginPath();X.arc(sx,sy,o.r+5,-PI/2,-PI/2+p*PI2);X.stroke();
-  dT('HOLD',sx,sy,12,'#80DEEA','center',true);
+  dT('KONFERENZ',sx,sy,12,'#80DEEA','center',true);
+  const remain=Math.max(0,o.target-o.progress);
+  dT(Math.ceil(remain)+'s',sx,sy+14,9,'#B2EBF2','center',true);
 }else if(o.type==='escort'){
  const msx=o.machineX-cx,msy=o.machineY-cy,osx=o.orbX-cx,osy=o.orbY-cy;
  X.fillStyle='rgba(255,213,79,.08)';X.beginPath();X.arc(msx,msy,o.machineR+12,0,PI2);X.fill();
@@ -112,9 +114,9 @@ gfx.forEach(g=>{const sx=g.x-cx,sy=g.y-cy,a=1-g.t/g.dur;
 X.globalAlpha=1;
 pickups.forEach(p=>{const sx=p.x-cx,sy=p.y-cy,b=Math.sin(gameTime*5+p.x)*3;
  const py=sy+b;
- if(p.type==='xp')dE('🔹',sx,py,14);
- else if(p.type==='coin')dE('🪙',sx,py,14);
- else if(p.type==='hp')dE('💚',sx,py,14);
+ if(p.type==='xp'){X.globalAlpha=1;X.fillStyle='#fff';dE('🔹',sx,py,14)}
+ else if(p.type==='coin'){X.globalAlpha=1;X.fillStyle='#fff';dE('🪙',sx,py,14)}
+ else if(p.type==='hp'){X.globalAlpha=1;X.fillStyle='#fff';dE('💚',sx,py,14)}
  else if(p.type==='temp'){
   const t=TEMP_BY_ID[p.id],col='#00E5FF';
   X.strokeStyle=col;X.lineWidth=2.2;
@@ -200,7 +202,6 @@ if(activeObjective){
   X.globalAlpha=.25;X.fillStyle='#3F51B5';X.beginPath();X.arc(sx,sy,o.r+22,0,PI2);X.fill();X.globalAlpha=1;
   X.strokeStyle='rgba(92,107,192,.9)';X.lineWidth=3;X.beginPath();X.arc(sx,sy,o.r+12,0,PI2);X.stroke();
   X.strokeStyle='rgba(179,229,252,.5)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.pulseR*pulse,0,PI2);X.stroke();
-  X.strokeStyle='rgba(129,212,250,.8)';X.lineWidth=4;X.beginPath();X.moveTo(sx,sy-90);X.lineTo(sx,sy+90);X.stroke();
   dE('💻',sx,sy,28);
   dT('SPAM BOT TERMINAL',sx,sy-44,9,'#C5CAE9','center',true);
   dBar(sx-45,sy-29,90,6,o.hp/o.mhp,'#5C6BC0','rgba(0,0,0,.5)');
@@ -279,7 +280,7 @@ if(activeObjective){
  X.fillStyle='rgba(0,0,0,.42)';X.beginPath();X.roundRect(VW/2-140,56,280,34,9);X.fill();
  if(activeObjective.type==='hold'){
   const o=activeObjective,p=clamp(o.progress/o.target,0,1);
-  dT('🎯 Zone halten ('+Math.ceil(o.timer||0)+'s)',VW/2,67,10,'#80DEEA','center',true);
+  dT('🎯 Konferenzbesprechung halten ('+Math.ceil(o.timer||0)+'s)',VW/2,67,10,'#80DEEA','center',true);
   dBar(VW/2-110,76,220,8,p,'#00BCD4','rgba(255,255,255,.12)');
  }else if(activeObjective.type==='hazard'){
   const o=activeObjective;
