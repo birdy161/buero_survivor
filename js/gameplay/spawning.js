@@ -423,26 +423,40 @@ if(!P||activeObjective||waveT>0||bossRef)return;
 const oc=BALANCE.objectives;
 if(wave<oc.minWave)return;
 const roll=Math.random();
-if(roll<.34){
+if(roll<.2){
  const hc=oc.hold,p=pickArenaPos(170,480);
  activeObjective={type:'hold',x:p.x,y:p.y,r:hc.radius,progress:0,target:hc.targetTime,decay:hc.decayPerSec,timer:hc.timeout};
  fTxt(p.x,p.y-24,'🛡️ Konferenzbesprechung halten','#B2EBF2',16);
  return;
 }
-if(roll<.67){
+if(roll<.4){
  const hc=oc.hazard,p=pickArenaPos(250,760);
  activeObjective={type:'hazard',x:p.x,y:p.y,r:hc.radius,hp:hc.hp,mhp:hc.hp,timer:hc.timeout??hc.duration,pulseT:0,pulseEvery:hc.pulseEvery,pulseR:hc.pulseRadius,pulseDmg:hc.pulseDamage};
  fTxt(p.x,p.y-26,'💻 Spam Bot Terminal zerstören','#FF8A80',16);
  return;
 }
-const ec=oc.escort,p=pickArenaPos(260,700),ox=clamp(P.x+rng(-35,35),30,worldW-30),oy=clamp(P.y+rng(-35,35),30,worldH-30);
-const sDist=Math.max(1,dst({x:ox,y:oy},{x:p.x,y:p.y}));
-const tBase=Number(ec.durationBase??6),tPer100=Number(ec.durationPer100px??4.5);
-const tRaw=tBase+(sDist/100)*tPer100;
-const tMin=Number(ec.durationMin??10),tMax=Number(ec.durationMax??40);
-const t=clamp(tRaw,tMin,tMax);
-activeObjective={type:'escort',orbX:ox,orbY:oy,orbR:ec.orbRadius,machineX:p.x,machineY:p.y,machineR:ec.machineRadius,tether:ec.tetherDistance,startDist:sDist,timer:t};
-fTxt(p.x,p.y-26,'✉️ Post zustellen','#FFE082',16);
+if(roll<.6){
+ const ec=oc.escort,p=pickArenaPos(260,700),ox=clamp(P.x+rng(-35,35),30,worldW-30),oy=clamp(P.y+rng(-35,35),30,worldH-30);
+ const sDist=Math.max(1,dst({x:ox,y:oy},{x:p.x,y:p.y}));
+ const tBase=Number(ec.durationBase??6),tPer100=Number(ec.durationPer100px??4.5);
+ const tRaw=tBase+(sDist/100)*tPer100;
+ const tMin=Number(ec.durationMin??10),tMax=Number(ec.durationMax??40);
+ const t=clamp(tRaw,tMin,tMax);
+ activeObjective={type:'escort',orbX:ox,orbY:oy,orbR:ec.orbRadius,machineX:p.x,machineY:p.y,machineR:ec.machineRadius,tether:ec.tetherDistance,startDist:sDist,timer:t};
+ fTxt(p.x,p.y-26,'✉️ Post zustellen','#FFE082',16);
+ return;
+}
+if(roll<.8){
+ const cc=oc.coffee,orbs=[];
+ for(let i=0;i<cc.count;i++)orbs.push(pickArenaPos(cc.spawnMinDist,cc.spawnMaxDist));
+ activeObjective={type:'coffee',orbs,timer:cc.timeout,rad:cc.radius};
+ fTxt(P.x,P.y-26,'☕ Kaffee-Run','#C5E1A5',16);
+ return;
+}
+const kc=oc.call,p=pickArenaPos(180,520);
+activeObjective={type:'call',x:p.x,y:p.y,r:kc.radius,progress:0,target:kc.targetTime,decay:kc.decayPerSec,timer:kc.timeout};
+fTxt(p.x,p.y-24,'📞 Kundenanruf','#B39DDB',16);
+return;
 }
 
 function completeObjective(){
@@ -467,6 +481,18 @@ if(o.type==='hold'){
  burst(o.machineX,o.machineY,22,'#FFD54F',200,6,.55);
  for(const e of enemies){if(e.hp>0&&dst({x:o.machineX,y:o.machineY},e)<ec.rewardEmpRadius)hurtE(e,ec.rewardEmpDamage,true)}
  fTxt(o.machineX,o.machineY-24,'✅ Post zugestellt','#FFD54F',16);sfx('power');
+}else if(o.type==='coffee'){
+ const cc=oc.coffee;
+ coins+=cc.rewardCoins;triggerCoinHudPulse();addXP(cc.rewardXp);
+ objectiveRewardText=`Belohnung: +${cc.rewardCoins} Münzen, +${cc.rewardXp} XP`;
+ objectiveRewardT=2.6;
+ fTxt(P.x,P.y-34,'✅ Kaffee geliefert','#C5E1A5',16);sfx('power');
+}else if(o.type==='call'){
+ const kc=oc.call;
+ coins+=kc.rewardCoins;triggerCoinHudPulse();addXP(kc.rewardXp);
+ objectiveRewardText=`Belohnung: +${kc.rewardCoins} Münzen, +${kc.rewardXp} XP`;
+ objectiveRewardT=2.6;
+ fTxt(P.x,P.y-34,'✅ Kundenanruf abgeschlossen','#B39DDB',16);sfx('power');
 }
 activeObjective=null;objectiveSpawnT=0;
 }
@@ -480,6 +506,10 @@ if(activeObjective.type==='hazard'){
  fTxt(P.x,P.y-36,'❌ Post verspätet','#FFAB91',15);
 }else if(activeObjective.type==='hold'){
  fTxt(P.x,P.y-36,'❌ Konferenzbesprechung abgebrochen','#FFAB91',15);
+}else if(activeObjective.type==='coffee'){
+ fTxt(P.x,P.y-36,'❌ Kaffee-Run gescheitert','#FFAB91',15);
+}else if(activeObjective.type==='call'){
+ fTxt(P.x,P.y-36,'❌ Kundenanruf abgebrochen','#FFAB91',15);
 }
 activeObjective=null;objectiveSpawnT=0;
 }
@@ -510,6 +540,33 @@ if(o.type==='hazard'){
   if(dst(P,o)<=o.pulseR)pHurt(o.pulseDmg);
  }
  if(o.hp<=0)completeObjective();
+ else if(o.timer<=0)failObjective();
+ return;
+}
+if(o.type==='coffee'){
+ const cc=BALANCE.objectives.coffee;
+ o.timer=Math.max(0,(o.timer||0)-dt);
+ let done=0;
+ for(const orb of o.orbs){
+  if(orb.done){done++;continue}
+  if(dst(P,orb)<=cc.radius+P.sz){orb.done=true;done++;burst(orb.x,orb.y,6,'#C5E1A5',70,4,.3);sfx('power')}
+ }
+ if(done>=o.orbs.length)completeObjective();
+ else if(o.timer<=0)failObjective();
+ return;
+}
+if(o.type==='call'){
+ const kc=BALANCE.objectives.call;
+ o.timer=Math.max(0,(o.timer||0)-dt);
+ const inside=dst(P,o)<o.r+P.sz;
+ let clear=true;
+ for(const e of enemies){
+  if(e.hp<=0)continue;
+  if(dst(e,o)<o.r+e.sz+10){clear=false;break}
+ }
+ const ok=inside&&clear;
+ o.progress=ok?Math.min(o.target,o.progress+dt):Math.max(0,o.progress-o.decay*dt);
+ if(o.progress>=o.target)completeObjective();
  else if(o.timer<=0)failObjective();
  return;
 }

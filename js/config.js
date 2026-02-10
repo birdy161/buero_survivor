@@ -110,6 +110,23 @@ const BALANCE={
    rewardCoins:10,
    rewardEmpRadius:220,
    rewardEmpDamage:90
+    },
+    coffee:{
+     count:4,
+     radius:16,
+     timeout:20,
+     spawnMinDist:140,
+     spawnMaxDist:520,
+     rewardCoins:15,
+     rewardXp:30
+   },
+   call:{
+    radius:120,
+    targetTime:10,
+    timeout:22,
+    decayPerSec:1.6,
+    rewardCoins:18,
+    rewardXp:35
   }
  },
  drops:{
