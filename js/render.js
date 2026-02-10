@@ -155,6 +155,11 @@ enemies.forEach(e=>{if(e.hp<=0)return;const sx=e.x-cx,sy=e.y-cy;
  if(e.special==='micromanager'){
   const br=(BALANCE.director.specialEnemies?.micromanager?.buffRadius)||220;
   X.globalAlpha=.09+Math.sin(gameTime*4)*.03;X.fillStyle='#EF5353';X.beginPath();X.arc(sx,sy,br,0,PI2);X.fill();X.globalAlpha=1;
+  X.strokeStyle='rgba(239,83,83,.45)';X.lineWidth=1.4;
+  for(const t of enemies){
+   if(t===e||t.hp<=0||t.special==='micromanager')continue;
+   if(dst(e,t)<=br){const tx=t.x-cx,ty=t.y-cy;X.beginPath();X.moveTo(sx,sy);X.lineTo(tx,ty);X.stroke()}
+  }
  }
  // HP bar
  if(e.hp<e.mhp){const bw=rsz*2;dBar(sx-bw/2,sy-rsz-9,bw,4,e.hp/e.mhp,e.isBoss?'#FF5252':'#66BB6A')}
