@@ -12,8 +12,8 @@ const BALANCE={
    eventRadius:1,
    budgetMultiplier:1,
    budgetPost10Growth:1.12,
-   enemyStatGrowth:1,
-   bossStatGrowth:1,
+   enemyStatGrowth:1.2,
+   bossStatGrowth:1.5,
    roleTierShift:0
   },
   ambient:{
