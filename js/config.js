@@ -13,7 +13,7 @@ const BALANCE={
    budgetMultiplier:1,
    budgetPost10Growth:1.12,
    enemyStatGrowth:1.2,
-   bossStatGrowth:3,
+   bossStatGrowth:4,
    roleTierShift:0
   },
   ambient:{
@@ -175,9 +175,13 @@ const BALANCE={
  },
  arena:{
   hazards:{
-   maxActive:3,
-   spawnInterval:20,
-   spawnMinDist:220,
+   maxActiveBase:3,
+   maxActivePerWave:0.35,
+   maxActiveCap:12,
+   spawnIntervalBase:16,
+   spawnIntervalWaveScale:0.35,
+   spawnIntervalMin:3,
+   spawnMinDist:100,
    spawnMaxDist:800,
    zapZone:{
     radius:90,
@@ -187,7 +191,7 @@ const BALANCE={
     activeDuration:0.5,
     cooldown:1.2,
     enemyDamage:32,
-    playerDamage:16,
+    playerDamage:80,
     enemySlow:0.6
    }
   },
@@ -203,7 +207,7 @@ const BALANCE={
     explosionRadius:110,
     chainRadius:140,
     enemyDamage:70,
-    playerDamage:25,
+    playerDamage:50,
     knockback:45
    },
    coffee:{

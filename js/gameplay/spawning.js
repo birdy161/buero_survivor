@@ -309,12 +309,28 @@ return{x:clamp(P.x+rng(-maxDist,maxDist),60,worldW-60),y:clamp(P.y+rng(-maxDist,
 
 function spawnArenaHazard(){
 const hc=BALANCE.arena.hazards,zc=hc.zapZone;
-if(!P||arenaHazards.length>=hc.maxActive)return;
+if(!P||arenaHazards.length>=arenaHazardCap())return;
 const p=pickArenaPos(hc.spawnMinDist,hc.spawnMaxDist);
 arenaHazards.push({
  id:Math.random(),type:'zap_zone',x:p.x,y:p.y,r:zc.radius,state:'idle',t:0,life:zc.life,
  interval:zc.interval,warning:zc.warning,activeDur:zc.activeDuration,cooldown:zc.cooldown,damageE:zc.enemyDamage,damageP:zc.playerDamage,slowE:zc.enemySlow
 });
+}
+
+function arenaHazardCap(){
+ const hc=BALANCE.arena.hazards;
+ const base=Number(hc.maxActiveBase??hc.maxActive??3);
+ const per=Number(hc.maxActivePerWave??0);
+ const cap=Number(hc.maxActiveCap??base);
+ return Math.max(1,Math.min(cap,Math.round(base+(Math.max(1,wave)-1)*per)));
+}
+
+function arenaHazardInterval(){
+ const hc=BALANCE.arena.hazards;
+ const base=Number(hc.spawnIntervalBase??hc.spawnInterval??14);
+ const scale=Number(hc.spawnIntervalWaveScale??0);
+ const min=Number(hc.spawnIntervalMin??0.1);
+ return Math.max(min,base-(Math.max(1,wave)-1)*scale);
 }
 
 function spawnArenaTool(){
@@ -362,7 +378,7 @@ if(dst(h,P)<=h.r)pHurt(h.damageP);
 function tickArenaEvents(dt){
 if(!P)return;
 arenaHazSpawnT+=dt;
-if(arenaHazSpawnT>=BALANCE.arena.hazards.spawnInterval){arenaHazSpawnT=0;spawnArenaHazard()}
+if(arenaHazSpawnT>=arenaHazardInterval()){arenaHazSpawnT=0;spawnArenaHazard()}
 arenaToolSpawnT+=dt;
 if(arenaToolSpawnT>=BALANCE.arena.tools.spawnInterval){arenaToolSpawnT=0;spawnArenaTool()}
 
