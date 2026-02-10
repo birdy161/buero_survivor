@@ -185,7 +185,7 @@ if(e.infected){
   if(dst(e,e2)<80){hurtE(e2,Math.floor(P.bdmg*P.dmgM*1.5),true);e2.infected=true}}
 }
 
-if(e.isBoss){bossRef=null;burst(e.x,e.y,30,'#FFD700',180,8,.7);sfx('boom');cam.shake=18;triggerSlowMo(.08,.28,.4);
+if(e.isBoss){bossRef=null;bossHazards=[];bossHazZapT=0;bossHazLaserT=0;burst(e.x,e.y,30,'#FFD700',180,8,.7);sfx('boom');cam.shake=18;triggerSlowMo(.08,.28,.4);
  for(let i=0;i<dd.bossCoinBurstCount;i++)pickups.push({x:e.x+rng(-50,50),y:e.y+rng(-50,50),type:'coin',val:Math.max(1,Math.floor(e.co/dd.bossCoinValueDivisor)),life:dd.coinPickupLifetime});
  spawnTempPickup(e.x,e.y,.9)}
 // Clean hitTracker

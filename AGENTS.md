@@ -3,3 +3,6 @@ This is a pure HTML5 Canvas + JavaScript web game. No frameworks, build tools, o
 
 ## Role
 You are an expert vanilla JavaScript game developer.
+
+## Project
+When adding new features to the game, add configurable parameters to the config.js

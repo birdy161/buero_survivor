@@ -22,6 +22,70 @@ cam.x=lerp(cam.x,P.x-VW/2,6*dt);cam.y=lerp(cam.y,P.y-VH/2,6*dt);
 if(cam.shake>.5)cam.shake*=.88;else cam.shake=0;
 }
 
+function spawnBossZap(){
+const zh=BALANCE.director.bossHazards?.zap;
+if(!bossRef||!zh)return;
+const x=clamp(bossRef.x+rng(-220,220),60,worldW-60);
+const y=clamp(bossRef.y+rng(-220,220),60,worldH-60);
+bossHazards.push({type:'boss_zap',x,y,r:zh.radius,state:'warning',t:0,warning:zh.warning,activeDur:zh.activeDuration,cooldown:zh.cooldown,dmg:zh.playerDamage});
+}
+
+function spawnBossLaser(){
+const lh=BALANCE.director.bossHazards?.laser;
+if(!bossRef||!lh)return;
+bossHazards.push({type:'boss_laser',x:bossRef.x,y:bossRef.y,r:lh.radius,width:lh.width,a:rng(0,PI2),t:0,warn:lh.warning,dur:lh.duration,rot:lh.rotateSpeed,dmg:lh.tickDamage,hitT:0});
+}
+
+function tickBossHazards(dt){
+if(!bossRef||bossRef.hp<=0){
+ if(bossHazards.length)bossHazards.length=0;
+ bossHazZapT=0;bossHazLaserT=0;
+ return;
+}
+const bh=BALANCE.director.bossHazards||{};
+const hpP=bossRef.hp/Math.max(1,bossRef.mhp);
+if(bh.zap&&hpP<=0.7){
+ bossHazZapT+=dt;
+ if(bossHazZapT>=bh.zap.interval){bossHazZapT=0;spawnBossZap()}
+}else if(hpP>0.7){
+ bossHazZapT=0;
+}
+if(bh.laser&&hpP<=0.4){
+ bossHazLaserT+=dt;
+ if(bossHazLaserT>=bh.laser.interval){bossHazLaserT=0;spawnBossLaser()}
+}else if(hpP>0.4){
+ bossHazLaserT=0;
+}
+for(let i=bossHazards.length-1;i>=0;i--){
+ const h=bossHazards[i];
+ if(h.type==='boss_zap'){
+  h.t+=dt;
+  if(h.state==='warning'&&h.t>=h.warning){
+   h.state='active';h.t=0;
+   burst(h.x,h.y,10,'#B39DDB',h.r*1.2,4,.35);sfx('freeze');
+   if(dst(P,h)<=h.r+P.sz)pHurt(h.dmg);
+  }else if(h.state==='active'&&h.t>=h.activeDur){
+   h.state='cooldown';h.t=0;
+  }else if(h.state==='cooldown'&&h.t>=h.cooldown){
+   bossHazards.splice(i,1);continue;
+  }
+ }else if(h.type==='boss_laser'){
+  h.t+=dt;h.a+=h.rot*dt;h.x=bossRef.x;h.y=bossRef.y;
+  if(h.t>=h.warn+h.dur){bossHazards.splice(i,1);continue}
+  if(h.t>=h.warn){
+   h.hitT=Math.max(0,(h.hitT||0)-dt);
+   const dx=Math.cos(h.a),dy=Math.sin(h.a);
+   const vx=P.x-h.x,vy=P.y-h.y;
+   const t=clamp(vx*dx+vy*dy,0,h.r);
+   const cx=h.x+dx*t,cy=h.y+dy*t;
+   if(dst(P,{x:cx,y:cy})<=h.width+P.sz*.2&&h.hitT<=0){
+    pHurt(h.dmg);h.hitT=.35;
+   }
+  }
+ }
+}
+}
+
 function update(dt){
 if(state!=='playing'||!P)return;
 gameTime+=dt;getKI();
@@ -95,6 +159,7 @@ if(waveT<=0){
 tickObjectives(dt);
 tickArenaEvents(dt);
 tickPhotocopiers(dt);
+tickBossHazards(dt);
 applyMicromanagerBuffs();
 
 // Fire weapons

@@ -52,6 +52,27 @@ arenaHazards.forEach(h=>{
  if(h.state==='warning')dT('⚠️',sx,sy,13,'#FFD740');
  if(h.state==='active')dT('⚡',sx,sy,15,'#00E5FF');
 });
+bossHazards.forEach(h=>{
+ if(h.type==='boss_zap'){
+  const sx=h.x-cx,sy=h.y-cy;
+  let sc='rgba(179,157,219,.25)',fc='rgba(179,157,219,.08)';
+  if(h.state==='warning'){
+   const blink=Math.sin(gameTime*14)>0?1:.45;
+   sc=`rgba(179,157,219,${.5*blink})`;fc=`rgba(179,157,219,${.12*blink})`;
+  }else if(h.state==='active'){sc='rgba(186,104,200,.9)';fc='rgba(186,104,200,.2)'}
+  X.fillStyle=fc;X.beginPath();X.arc(sx,sy,h.r,0,PI2);X.fill();
+  X.strokeStyle=sc;X.lineWidth=2.6;X.beginPath();X.arc(sx,sy,h.r,0,PI2);X.stroke();
+  if(h.state==='warning')dT('⚠️',sx,sy,13,'#D1C4E9');
+  if(h.state==='active')dT('📣',sx,sy,14,'#E1BEE7');
+ }else if(h.type==='boss_laser'){
+  const sx=h.x-cx,sy=h.y-cy,dx=Math.cos(h.a),dy=Math.sin(h.a);
+  const active=h.t>=h.warn;
+  X.strokeStyle=active?'rgba(244,143,177,.9)':'rgba(244,143,177,.35)';
+  X.lineWidth=active?5:3;
+  X.beginPath();X.moveTo(sx,sy);X.lineTo(sx+dx*h.r,sy+dy*h.r);X.stroke();
+  if(!active)dT('⚠️',sx+dx*h.r*.6,sy+dy*h.r*.6,10,'#F8BBD0');
+ }
+});
 arenaTools.forEach(t=>{
  const sx=t.x-cx,sy=t.y-cy;
  if(t.type==='barrel'){
@@ -237,7 +258,7 @@ if(activeObjective){
   X.fillStyle='rgba(179,157,219,.08)';X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.fill();
   X.strokeStyle='rgba(179,157,219,.5)';X.lineWidth=2;X.beginPath();X.arc(sx,sy,o.r,0,PI2);X.stroke();
   X.strokeStyle='#B39DDB';X.lineWidth=4;X.beginPath();X.arc(sx,sy,o.r+5,-PI/2,-PI/2+p*PI2);X.stroke();
-  dT(Math.ceil(remain)+'s',sx,sy+2,11,'#D1C4E9','center',true);
+  dT(Math.ceil(remain)+'s',sx,sy-12,11,'#D1C4E9','center',true);
   dE('📞',sx,sy,18);
   dT('ANRUF – FEINDE RAUS',sx,sy+18,9,'#D1C4E9','center',true);
  }else if(o.type==='escort'){
@@ -288,6 +309,12 @@ if(!P)return;
 // HP
 dBar(12,12,clamp(VW*.28,80,180),14,P.hp/P.mhp,'#EF5350','rgba(0,0,0,.5)');
 dT(`${Math.ceil(P.hp)}/${P.mhp}`,12+clamp(VW*.14,40,90),19,9,'#fff','center',true);
+// Armor
+const arm=Math.max(0,Math.floor(P.armor+getArmorBonus()));
+if(arm>0){
+ const hpW=clamp(VW*.28,80,180);
+ dT(`🦺 ${arm}`,12+hpW+10,19,9,'#B0BEC5','left',true);
+}
 // XP
 dBar(12,VH-18,VW-24,8,P.xp/P.xpN,'#42A5F5','rgba(0,0,0,.4)');
 // Level

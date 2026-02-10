@@ -14,6 +14,7 @@ waveSpawned=0;waveTarget=0;
 directorWaveTime=0;directorAmbientT=0;directorBudget=0;directorEvents=[];
 arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;
 photocopiers=[];photocopierSpawnT=0;
+bossHazards=[];bossHazZapT=0;bossHazLaserT=0;
 activeObjective=null;objectiveSpawnT=0;objectivePenaltyT=0;
 combo=0;comboT=0;lastMS=0;comboSpdB=0;comboShield=0;
 bossRef=null;specCD=0;upChoices=[];wepState={clicks:0};hitTracker={};
@@ -70,6 +71,7 @@ activeTemps=r.activeTemps||{};tempData=r.tempData||{};normalizeTempState();
 specCD=Math.max(0,num(r.specCD,0));bossRef=null;upChoices=[];wepState={clicks:0};hitTracker={};enemies=[];projs=[];pickups=[];parts=[];gfx=[];
 arenaHazards=[];arenaTools=[];arenaHazSpawnT=0;arenaToolSpawnT=0;
 photocopiers=[];photocopierSpawnT=0;
+bossHazards=[];bossHazZapT=0;bossHazLaserT=0;
 objectiveRewardText='';objectiveRewardT=0;
 if(!directorEvents.length&&typeof buildDirectorWave==='function'&&P&&waveT<=0)buildDirectorWave(Math.max(1,wave));
 if(activeObjective&&activeObjective.type==='escort'){

@@ -13,7 +13,7 @@ const BALANCE={
    budgetMultiplier:1,
    budgetPost10Growth:1.12,
    enemyStatGrowth:1.2,
-   bossStatGrowth:1.5,
+   bossStatGrowth:3,
    roleTierShift:0
   },
   ambient:{
@@ -54,10 +54,29 @@ const BALANCE={
     chargeTime:2,
     cooldown:4,
     projectileSpeed:560,
-   minRange:260,
-   maxRange:520
+     minRange:260,
+     maxRange:520
   }
- },
+   },
+   bossHazards:{
+  zap:{
+   radius:120,
+   interval:6,
+   warning:0.8,
+   activeDuration:0.6,
+   cooldown:0.8,
+   playerDamage:14
+  },
+  laser:{
+   radius:260,
+   width:10,
+   interval:9,
+   warning:0.7,
+   duration:3.4,
+   rotateSpeed:1.8,
+   tickDamage:16
+  }
+ }
  },
  waves:{
   breakDuration:3,
